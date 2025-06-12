@@ -22,9 +22,27 @@ export function GenerationInterface() {
   });
 
   const aspectRatioOptions = [
-    { value: '16:9', label: '16:9 (Landscape)', dimensions: 'w-full aspect-video' },
-    { value: '4:3', label: '4:3 (Standard)', dimensions: 'w-full aspect-[4/3]' },
-    { value: '1:1', label: '1:1 (Square)', dimensions: 'w-full aspect-square' },
+    { 
+      value: '16:9', 
+      label: 'Landscape', 
+      ratio: '16:9',
+      dimensions: 'w-full aspect-video',
+      shapeClass: 'w-16 h-9'
+    },
+    { 
+      value: '4:3', 
+      label: 'Standard', 
+      ratio: '4:3',
+      dimensions: 'w-full aspect-[4/3]',
+      shapeClass: 'w-12 h-9'
+    },
+    { 
+      value: '1:1', 
+      label: 'Square', 
+      ratio: '1:1',
+      dimensions: 'w-full aspect-square',
+      shapeClass: 'w-9 h-9'
+    },
   ];
 
   const styleOptions = [
@@ -117,23 +135,46 @@ export function GenerationInterface() {
                 </div>
               </div>
 
-              {/* Aspect Ratio */}
+              {/* Aspect Ratio - Visual Selection */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
                   Aspect Ratio
                 </label>
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full p-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg"
-                  disabled={generationState.isGenerating}
-                >
+                <div className="grid grid-cols-3 gap-3">
                   {aspectRatioOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+                    <button
+                      key={option.value}
+                      onClick={() => setAspectRatio(option.value)}
+                      disabled={generationState.isGenerating}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                        aspectRatio === option.value
+                          ? 'border-primary bg-primary/5 shadow-soft'
+                          : 'border-border bg-neutral-bg hover:border-primary/50'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        {/* Visual Shape */}
+                        <div className={`${option.shapeClass} bg-gradient-to-br from-primary/20 to-accent/20 rounded border-2 ${
+                          aspectRatio === option.value ? 'border-primary' : 'border-border'
+                        }`}></div>
+                        
+                        {/* Label */}
+                        <div className="text-center">
+                          <div className={`text-sm font-medium ${
+                            aspectRatio === option.value ? 'text-primary' : 'text-text'
+                          }`}>
+                            {option.label}
+                          </div>
+                          <div className={`text-xs ${
+                            aspectRatio === option.value ? 'text-primary/80' : 'text-text-muted'
+                          }`}>
+                            {option.ratio}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Style Selection */}
@@ -346,7 +387,7 @@ export function GenerationInterface() {
 
               {/* Preview Info */}
               <div className="text-sm text-text-muted">
-                Preview will show your generated mind map in {selectedAspectRatio?.label.toLowerCase()} format
+                Preview will show your generated mind map in {selectedAspectRatio?.label.toLowerCase()} format ({selectedAspectRatio?.ratio})
               </div>
             </div>
           </div>
