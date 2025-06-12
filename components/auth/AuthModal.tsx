@@ -69,8 +69,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <div className="p-8 pt-12">
           {/* Title */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-text mb-2">登录</h2>
-            <p className="text-text-muted">登录您的账户</p>
+            <h2 className="text-2xl font-semibold text-text mb-2">Sign In</h2>
+            <p className="text-text-muted">Sign in to your account</p>
           </div>
 
           {/* Google Login Button */}
@@ -89,16 +89,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
             )}
-            <span>{isLoading ? '登录中...' : '使用 Google 登录'}</span>
+            <span>{isLoading ? 'Signing in...' : 'Continue with Google'}</span>
           </button>
 
           {/* Footer text */}
           <div className="text-center mt-6">
             <p className="text-xs text-text-muted">
-              登录即表示您同意我们的{' '}
-              <a href="/terms" className="text-primary hover:underline">服务条款</a>
-              {' '}和{' '}
-              <a href="/privacy" className="text-primary hover:underline">隐私政策</a>
+              By signing in, you agree to our{' '}
+              <a href="/terms" className="text-primary hover:underline">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>
             </p>
           </div>
         </div>
