@@ -26,31 +26,31 @@ export function GenerationInterface() {
       value: '1:1', 
       ratio: '1:1',
       dimensions: 'w-full aspect-square',
-      shapeClass: 'w-4 h-4'
+      shapeClass: 'w-6 h-6'
     },
     { 
       value: '3:4', 
       ratio: '3:4',
       dimensions: 'w-full aspect-[3/4]',
-      shapeClass: 'w-3 h-4'
+      shapeClass: 'w-5 h-6'
     },
     { 
       value: '9:16', 
       ratio: '9:16',
       dimensions: 'w-full aspect-[9/16]',
-      shapeClass: 'w-2 h-4'
+      shapeClass: 'w-4 h-7'
     },
     { 
       value: '4:3', 
       ratio: '4:3',
       dimensions: 'w-full aspect-[4/3]',
-      shapeClass: 'w-5 h-4'
+      shapeClass: 'w-8 h-6'
     },
     { 
       value: '16:9', 
       ratio: '16:9',
       dimensions: 'w-full aspect-video',
-      shapeClass: 'w-6 h-3'
+      shapeClass: 'w-9 h-5'
     },
   ];
 
@@ -155,7 +155,7 @@ export function GenerationInterface() {
                       key={option.value}
                       onClick={() => setAspectRatio(option.value)}
                       disabled={generationState.isGenerating}
-                      className={`p-2 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                      className={`p-1.5 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                         aspectRatio === option.value
                           ? 'border-primary bg-primary/5 shadow-soft'
                           : 'border-border bg-neutral-bg hover:border-primary/50'
