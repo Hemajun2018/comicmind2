@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 export function Header() {
   // 状态管理：控制移动端菜单的开启和关闭
@@ -66,9 +67,13 @@ export function Header() {
               </nav>
             </div>
 
-            {/* === 右侧：桌面端登录按钮 === */}
+            {/* === 右侧：语言选择器和登录按钮 === */}
             {/* 使用ml-auto推到最右边 */}
-            <div className="hidden md:flex items-center ml-auto">
+            <div className="hidden md:flex items-center space-x-4 ml-auto">
+              {/* Language Selector */}
+              <LanguageSelector />
+              
+              {/* Sign In Button */}
               <button
                 onClick={handleSignInClick}
                 // 样式：橙色背景，白色文字，内边距32x12px，圆角，18px字体
@@ -111,8 +116,14 @@ export function Header() {
                   </Link>
                 ))}
                 
-                {/* 移动端登录按钮区域 */}
-                <div className="pt-4 border-t border-border">
+                {/* 移动端语言选择器和登录按钮区域 */}
+                <div className="pt-4 border-t border-border space-y-4">
+                  {/* Language Selector for Mobile */}
+                  <div className="flex justify-center">
+                    <LanguageSelector />
+                  </div>
+                  
+                  {/* Sign In Button for Mobile */}
                   <button
                     onClick={handleSignInClick}
                     // 样式：橙色背景，块级元素，居中文字，内边距32x16px
