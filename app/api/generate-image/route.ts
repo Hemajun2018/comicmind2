@@ -70,14 +70,14 @@ Style requirements:
       // 检查是否是分组配置问题
       if (errorData.error?.message?.includes('无可用渠道')) {
         return NextResponse.json({ 
-          error: 'gpt-4o-image 模型在当前分组中不可用',
-          message: '请按以下步骤配置麻雀API分组：',
+          error: 'gpt-4o-image model is not available in current group',
+          message: 'Please configure Maque API group following these steps:',
           steps: [
-            '1. 访问麻雀API控制台：https://pbs32p1cml.apifox.cn/',
-            '2. 进入 工作台 -> API令牌 页面',
-            '3. 找到你的API令牌并点击编辑',
-            '4. 在"渠道分组"中选择包含 gpt-4o-image 模型的分组',
-            '5. 保存配置后重试'
+            '1. Visit Maque API console: https://pbs32p1cml.apifox.cn/',
+            '2. Go to Workspace -> API Tokens page',
+            '3. Find your API token and click edit',
+            '4. Select a group that includes gpt-4o-image model in "Channel Group"',
+            '5. Save configuration and retry'
           ],
           originalError: errorData.error?.message,
           requestId: errorData.error?.message?.match(/request id: ([^)]+)/)?.[1]
@@ -135,7 +135,7 @@ Style requirements:
     if (!imageUrl) {
       console.error('No image URL found in response content:', messageContent);
       return NextResponse.json({ 
-        error: '未找到生成的图片URL',
+        error: 'Generated image URL not found',
         details: messageContent
       }, { status: 500 });
     }

@@ -86,7 +86,7 @@ export function GenerationInterface() {
   // 第一阶段：生成思维导图结构
   const handleGenerateStructure = async () => {
     if (!input.trim()) {
-      toast.error('请输入内容来生成思维导图');
+      toast.error('Please enter content to generate mind map');
       return;
     }
 
@@ -114,7 +114,7 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '生成结构失败');
+        throw new Error(data.error || 'Structure generation failed');
       }
 
       setGeneratedStructure(data.structure);
@@ -128,7 +128,7 @@ export function GenerationInterface() {
         error: null,
       });
 
-      toast.success('思维导图结构生成成功！请确认内容后点击生成图片');
+      toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
     } catch (error) {
       console.error('Structure generation error:', error);
       setGenerationState({
@@ -137,17 +137,17 @@ export function GenerationInterface() {
         isGeneratingImage: false,
         hasStructure: false,
         hasImage: false,
-        error: error instanceof Error ? error.message : '生成结构失败',
+        error: error instanceof Error ? error.message : 'Structure generation failed',
       });
 
-      toast.error('生成结构失败，请重试');
+      toast.error('Structure generation failed, please try again');
     }
   };
 
   // 第二阶段：生成思维导图图片
   const handleGenerateImage = async () => {
     if (!editableStructure.trim()) {
-      toast.error('请先生成或编辑思维导图结构');
+      toast.error('Please generate or edit mind map structure first');
       return;
     }
 
@@ -177,7 +177,7 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '生成图片失败');
+        throw new Error(data.error || 'Image generation failed');
       }
 
       // 提取图片URL（根据API响应格式调整）
@@ -194,7 +194,7 @@ export function GenerationInterface() {
         error: null,
       });
 
-      toast.success('思维导图图片生成成功！');
+      toast.success('Mind map image generated successfully!');
     } catch (error) {
       console.error('Image generation error:', error);
       setGenerationState({
@@ -203,10 +203,10 @@ export function GenerationInterface() {
         isGeneratingImage: false,
         hasStructure: true,
         hasImage: false,
-        error: error instanceof Error ? error.message : '生成图片失败',
+        error: error instanceof Error ? error.message : 'Image generation failed',
       });
 
-      toast.error('生成图片失败，请重试');
+      toast.error('Image generation failed, please try again');
     }
   };
 
@@ -217,7 +217,7 @@ export function GenerationInterface() {
   const handleSaveStructure = () => {
     setGeneratedStructure(editableStructure);
     setIsEditingStructure(false);
-    toast.success('结构已保存');
+    toast.success('Structure saved');
   };
 
   const handleCancelEdit = () => {
@@ -239,9 +239,9 @@ export function GenerationInterface() {
       link.href = generatedImageUrl;
       link.download = 'mindmap.png';
       link.click();
-      toast.success('思维导图已下载！');
+      toast.success('Mind map downloaded!');
     } else {
-      toast.error('没有可下载的图片');
+      toast.error('No image available for download');
     }
   };
 
@@ -275,26 +275,26 @@ export function GenerationInterface() {
               {/* Input Section */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
-                  输入内容
+                  Input Content
                 </label>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="在此输入您的文本、想法或文章内容。我们的AI将分析它并创建结构化的思维导图..."
+                  placeholder="Enter your text, ideas, or article content here. Our AI will analyze it and create a structured mind map..."
                   className="w-full h-32 p-4 border border-border rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text placeholder-text-muted bg-neutral-bg"
                   disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
                 />
                 <div className="text-sm text-text-muted">
-                  {input.length}/2000 字符
+                  {input.length}/2000 characters
                 </div>
               </div>
 
-              {/* 思维导图结构编辑区域 */}
+              {/* Mind Map Structure Editing Area */}
               {generationState.hasStructure && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="block text-lg font-semibold text-text">
-                      思维导图结构
+                      Mind Map Structure
                     </label>
                     {!isEditingStructure ? (
                       <button
@@ -302,7 +302,7 @@ export function GenerationInterface() {
                         className="text-primary hover:text-primary/80 flex items-center space-x-1"
                       >
                         <Edit className="w-4 h-4" />
-                        <span>编辑</span>
+                        <span>Edit</span>
                       </button>
                     ) : (
                       <div className="flex space-x-2">
@@ -311,14 +311,14 @@ export function GenerationInterface() {
                           className="text-green-600 hover:text-green-700 flex items-center space-x-1"
                         >
                           <Check className="w-4 h-4" />
-                          <span>保存</span>
+                                                      <span>Save</span>
                         </button>
                         <button
                           onClick={handleCancelEdit}
                           className="text-red-600 hover:text-red-700 flex items-center space-x-1"
                         >
                           <X className="w-4 h-4" />
-                          <span>取消</span>
+                                                      <span>Cancel</span>
                         </button>
                       </div>
                     )}
@@ -329,7 +329,7 @@ export function GenerationInterface() {
                       value={editableStructure}
                       onChange={(e) => setEditableStructure(e.target.value)}
                       className="w-full h-48 p-4 border border-border rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg font-mono text-sm"
-                      placeholder="编辑思维导图结构..."
+                                              placeholder="Edit mind map structure..."
                     />
                   ) : (
                     <div className="w-full h-48 p-4 border border-border rounded-xl bg-neutral-bg overflow-y-auto">
@@ -342,7 +342,7 @@ export function GenerationInterface() {
               {/* Aspect Ratio - Visual Selection */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
-                  长宽比
+                  Aspect Ratio
                 </label>
                 <div className="grid grid-cols-5 gap-3">
                   {aspectRatioOptions.map((option) => (
@@ -379,7 +379,7 @@ export function GenerationInterface() {
               {/* Style Selection */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
-                  艺术风格
+                  Art Style
                 </label>
                 <select
                   value={style}
@@ -401,7 +401,7 @@ export function GenerationInterface() {
               {/* Language Selection */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
-                  语言
+                  Language
                 </label>
                 <select
                   value={language}
@@ -427,12 +427,12 @@ export function GenerationInterface() {
                   {generationState.isGeneratingStructure ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>生成结构中...</span>
+                      <span>Generating Structure...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>生成思维导图结构</span>
+                      <span>Generate Mind Map Structure</span>
                     </>
                   )}
                 </button>
@@ -448,12 +448,12 @@ export function GenerationInterface() {
                   {generationState.isGeneratingImage ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>生成图片中...</span>
+                      <span>Generating Image...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>生成思维导图图片</span>
+                      <span>Generate Mind Map Image</span>
                     </>
                   )}
                 </button>
@@ -468,21 +468,21 @@ export function GenerationInterface() {
                       className="flex-1 border-2 border-accent text-accent px-4 py-3 rounded-xl font-medium hover:bg-accent hover:text-white transition-colors-smooth flex items-center justify-center space-x-2"
                     >
                       <RefreshCw className="w-4 h-4" />
-                      <span>重新生成</span>
+                      <span>Regenerate</span>
                     </button>
                     <button
                       onClick={handleDownload}
                       className="flex-1 bg-secondary text-text px-4 py-3 rounded-xl font-medium hover-darken transition-colors-smooth flex items-center justify-center space-x-2"
                     >
                       <Download className="w-4 h-4" />
-                      <span>下载</span>
+                      <span>Download</span>
                     </button>
                   </div>
                   <button
                     onClick={handleStartOver}
                     className="w-full border border-border text-text-muted px-4 py-2 rounded-xl font-medium hover:bg-neutral-bg transition-colors-smooth"
                   >
-                    重新开始
+                    Start Over
                   </button>
                 </div>
               )}
@@ -492,7 +492,7 @@ export function GenerationInterface() {
           {/* Right Panel - Preview Canvas */}
           <div className="bg-neutral-card rounded-xl p-6 shadow-soft">
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-text">预览</h2>
+              <h2 className="text-2xl font-semibold text-text">Preview</h2>
               
               {/* Preview Container */}
               <div className="relative">
@@ -503,8 +503,8 @@ export function GenerationInterface() {
                     <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
                       <div className="text-center">
                         <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">正在生成思维导图结构...</div>
-                        <div className="text-text-muted">AI正在分析您的内容并创建结构化大纲</div>
+                        <div className="text-lg font-semibold text-text mb-2">Generating mind map structure...</div>
+                        <div className="text-text-muted">AI is analyzing your content and creating structured outline</div>
                         
                         {/* Progress Bar */}
                         <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
@@ -519,8 +519,8 @@ export function GenerationInterface() {
                     <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
                       <div className="text-center">
                         <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">正在生成思维导图图片...</div>
-                        <div className="text-text-muted">AI正在将结构转换为漫画风格的思维导图</div>
+                        <div className="text-lg font-semibold text-text mb-2">Generating mind map image...</div>
+                        <div className="text-text-muted">AI is converting structure into comic-style mind map</div>
                         
                         {/* Progress Bar */}
                         <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
@@ -538,10 +538,10 @@ export function GenerationInterface() {
                           <Sparkles className="w-12 h-12 text-secondary" />
                         </div>
                         <h3 className="text-xl font-semibold text-text mb-2">
-                          您的思维导图将在这里显示
+                          Your mind map will appear here
                         </h3>
                         <p className="text-text-muted max-w-md">
-                          输入内容并点击"生成思维导图结构"开始创建漂亮的漫画风格思维导图
+                          Enter content and click "Generate Mind Map Structure" to start creating beautiful comic-style mind maps
                         </p>
                       </div>
                     </div>
@@ -555,10 +555,10 @@ export function GenerationInterface() {
                           <Check className="w-12 h-12 text-accent" />
                         </div>
                         <h3 className="text-xl font-semibold text-text mb-2">
-                          结构生成完成！
+                          Structure generation complete!
                         </h3>
                         <p className="text-text-muted max-w-md">
-                          思维导图结构已生成完成，请确认左侧内容后点击"生成思维导图图片"按钮
+                          Mind map structure has been generated. Please confirm the content on the left and click "Generate Mind Map Image" button
                         </p>
                       </div>
                     </div>
@@ -572,7 +572,7 @@ export function GenerationInterface() {
                         alt="Generated Mind Map"
                         className="w-full h-full object-contain rounded-xl"
                         onError={() => {
-                          toast.error('图片加载失败');
+                          toast.error('Image loading failed');
                           setGeneratedImageUrl('');
                         }}
                       />
@@ -587,10 +587,10 @@ export function GenerationInterface() {
                           <X className="w-12 h-12 text-red-500" />
                         </div>
                         <h3 className="text-xl font-semibold text-text mb-2">
-                          图片生成失败
+                          Image generation failed
                         </h3>
                         <p className="text-text-muted max-w-md">
-                          图片生成过程中出现问题，请尝试重新生成
+                          There was a problem during image generation, please try regenerating
                         </p>
                       </div>
                     </div>
@@ -599,7 +599,7 @@ export function GenerationInterface() {
               </div>
               
               <div className="text-sm text-text-muted">
-                预览将以 {selectedAspectRatio?.ratio} 格式显示您生成的思维导图
+                Preview will display your generated mind map in {selectedAspectRatio?.ratio} format
               </div>
             </div>
           </div>
@@ -616,12 +616,12 @@ export function GenerationInterface() {
               {generationState.isGeneratingStructure ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>生成结构中...</span>
+                  <span>Generating Structure...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  <span>生成思维导图结构</span>
+                  <span>Generate Mind Map Structure</span>
                 </>
               )}
             </button>
@@ -636,12 +636,12 @@ export function GenerationInterface() {
               {generationState.isGeneratingImage ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>生成图片中...</span>
+                  <span>Generating Image...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  <span>生成思维导图图片</span>
+                  <span>Generate Mind Map Image</span>
                 </>
               )}
             </button>

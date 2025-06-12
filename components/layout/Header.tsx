@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     // 页面顶部导航栏容器 - 固定在顶部，背景渐变，层级最高
-    <header className="bg-gradient-to-br from-neutral-bg to-neutral-card sticky top-0 z-50">
+    <header className="bg-gradient-to-br from-neutral-bg to-neutral-card">
       {/* 内容容器 - 设置最大宽度和响应式内边距 */}
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         {/* 导航栏主要布局 - 水平排列，Logo和菜单靠左，登录按钮靠右，高度80px */}
