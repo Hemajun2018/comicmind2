@@ -44,25 +44,20 @@ export function ProcessTimeline() {
           </p>
         </div>
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="hidden lg:block absolute top-16 left-0 right-0 h-1 bg-border"></div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={index} className="relative flex flex-col items-center">
-                  {/* Icon positioned above card */}
-                  <div className={`${step.bgColor} rounded-full p-4 shadow-soft mb-6 relative z-10`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <div key={index} className="relative">
+                {/* Card with icon embedded in top-left */}
+                <div className="bg-neutral-card rounded-xl p-6 shadow-soft relative">
+                  {/* Icon in top-left corner */}
+                  <div className={`${step.bgColor} rounded-full p-3 w-fit mb-6`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   
-                  {/* Card */}
-                  <div className="bg-neutral-card rounded-xl p-6 shadow-soft w-full text-center">
-                    <div className="text-sm font-medium text-text-muted mb-2">
-                      Step {index + 1}
-                    </div>
+                  {/* Content */}
+                  <div>
                     <h3 className="text-xl font-semibold text-text mb-3">
                       {step.title}
                     </h3>
@@ -71,9 +66,9 @@ export function ProcessTimeline() {
                     </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
