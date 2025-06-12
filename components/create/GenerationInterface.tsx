@@ -26,31 +26,31 @@ export function GenerationInterface() {
       value: '1:1', 
       ratio: '1:1',
       dimensions: 'w-full aspect-square',
-      shapeClass: 'w-6 h-6'
+      shapeClass: 'w-8 h-8'
     },
     { 
       value: '3:4', 
       ratio: '3:4',
       dimensions: 'w-full aspect-[3/4]',
-      shapeClass: 'w-5 h-6'
+      shapeClass: 'w-7 h-9'
     },
     { 
       value: '9:16', 
       ratio: '9:16',
       dimensions: 'w-full aspect-[9/16]',
-      shapeClass: 'w-4 h-7'
+      shapeClass: 'w-5 h-9'
     },
     { 
       value: '4:3', 
       ratio: '4:3',
       dimensions: 'w-full aspect-[4/3]',
-      shapeClass: 'w-8 h-6'
+      shapeClass: 'w-10 h-8'
     },
     { 
       value: '16:9', 
       ratio: '16:9',
       dimensions: 'w-full aspect-video',
-      shapeClass: 'w-9 h-5'
+      shapeClass: 'w-12 h-7'
     },
   ];
 
@@ -149,26 +149,28 @@ export function GenerationInterface() {
                 <label className="block text-lg font-semibold text-text">
                   Aspect Ratio
                 </label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-3">
                   {aspectRatioOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => setAspectRatio(option.value)}
                       disabled={generationState.isGenerating}
-                      className={`p-1.5 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                         aspectRatio === option.value
-                          ? 'border-primary bg-primary/5 shadow-soft'
-                          : 'border-border bg-neutral-bg hover:border-primary/50'
+                          ? 'border-primary bg-primary/10 shadow-lg scale-105'
+                          : 'border-border bg-neutral-bg hover:border-primary/50 hover:bg-primary/5'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="flex flex-col items-center space-y-1">
+                      <div className="flex flex-col items-center space-y-2">
                         {/* Visual Shape */}
-                        <div className={`${option.shapeClass} bg-gradient-to-br from-primary/20 to-accent/20 rounded border-2 ${
-                          aspectRatio === option.value ? 'border-primary' : 'border-border'
+                        <div className={`${option.shapeClass} border-2 ${
+                          aspectRatio === option.value 
+                            ? 'bg-primary/30 border-primary shadow-md' 
+                            : 'bg-gray-200 border-gray-300'
                         }`}></div>
                         
                         {/* Ratio Label */}
-                        <div className={`text-xs font-medium ${
+                        <div className={`text-xs font-semibold ${
                           aspectRatio === option.value ? 'text-primary' : 'text-text-muted'
                         }`}>
                           {option.ratio}
@@ -340,81 +342,51 @@ export function GenerationInterface() {
 
                         <div className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2">
                           <div className="w-14 h-14 bg-accent/60 rounded-full flex items-center justify-center shadow-soft border-3 border-white">
-                            <span className="text-lg">⭐</span>
+                            <span className="text-lg">✨</span>
                           </div>
                           <div className="text-sm font-medium text-text mt-1 text-center">Concept D</div>
                         </div>
 
                         {/* Connecting Lines */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                          <defs>
-                            <marker id="arrowhead" markerWidth="10" markerHeight="7" 
-                             refX="9" refY="3.5" orient="auto">
-                              <polygon points="0 0, 10 3.5, 0 7" fill="var(--text)" opacity="0.6" />
-                            </marker>
-                          </defs>
-                          
-                          {/* Lines from center to each node */}
-                          <line x1="50%" y1="50%" x2="25%" y2="25%" 
-                                stroke="var(--text)" strokeWidth="3" opacity="0.6" 
-                                markerEnd="url(#arrowhead)" strokeDasharray="5,5">
-                            <animate attributeName="stroke-dashoffset" values="10;0" dur="2s" repeatCount="indefinite"/>
-                          </line>
-                          <line x1="50%" y1="50%" x2="75%" y2="25%" 
-                                stroke="var(--text)" strokeWidth="3" opacity="0.6" 
-                                markerEnd="url(#arrowhead)" strokeDasharray="5,5">
-                            <animate attributeName="stroke-dashoffset" values="10;0" dur="2s" repeatCount="indefinite"/>
-                          </line>
-                          <line x1="50%" y1="50%" x2="25%" y2="75%" 
-                                stroke="var(--text)" strokeWidth="3" opacity="0.6" 
-                                markerEnd="url(#arrowhead)" strokeDasharray="5,5">
-                            <animate attributeName="stroke-dashoffset" values="10;0" dur="2s" repeatCount="indefinite"/>
-                          </line>
-                          <line x1="50%" y1="50%" x2="75%" y2="75%" 
-                                stroke="var(--text)" strokeWidth="3" opacity="0.6" 
-                                markerEnd="url(#arrowhead)" strokeDasharray="5,5">
-                            <animate attributeName="stroke-dashoffset" values="10;0" dur="2s" repeatCount="indefinite"/>
-                          </line>
+                          <line x1="50%" y1="50%" x2="25%" y2="25%" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="50%" y1="50%" x2="75%" y2="25%" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="50%" y1="50%" x2="25%" y2="75%" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="50%" y1="50%" x2="75%" y2="75%" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
                         </svg>
-
-                        {/* Decorative Elements */}
-                        <div className="absolute top-4 right-4 w-6 h-6 bg-secondary/40 rounded-full animate-bounce"></div>
-                        <div className="absolute bottom-4 left-4 w-4 h-4 bg-primary/40 rounded-full animate-bounce delay-300"></div>
-                        <div className="absolute top-4 left-4 w-5 h-5 bg-accent/40 rounded-full animate-bounce delay-500"></div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* Preview Info */}
+              
               <div className="text-sm text-text-muted">
                 Preview will show your generated mind map in {selectedAspectRatio?.ratio} format
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Fixed Generate Button */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-neutral-card border-t border-border">
-        <button
-          onClick={handleGenerate}
-          disabled={generationState.isGenerating || !input.trim()}
-          className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-        >
-          {generationState.isGenerating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Generating...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-5 h-5" />
-              <span>Generate Mind Map</span>
-            </>
-          )}
-        </button>
+        {/* Mobile Generate Button */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-neutral-card border-t border-border">
+          <button
+            onClick={handleGenerate}
+            disabled={generationState.isGenerating || !input.trim()}
+            className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            {generationState.isGenerating ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                <span>Generate Mind Map</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

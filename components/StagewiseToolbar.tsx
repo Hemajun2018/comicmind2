@@ -4,25 +4,24 @@ import { useEffect } from 'react';
 
 export function StagewiseToolbar() {
   useEffect(() => {
+    // Only load in development mode
     if (process.env.NODE_ENV === 'development') {
-      // 动态导入stagewise工具栏
-      import('@stagewise/toolbar').then(({ initToolbar }) => {
-        const stagewiseConfig = {
-          plugins: []
-        };
-        
-        // 初始化工具栏
-        initToolbar(stagewiseConfig);
-      }).catch(error => {
-        console.warn('Failed to initialize stagewise toolbar:', error);
-      });
+      // Dynamic import to ensure it's only loaded in development
+      import('@stagewise/toolbar')
+        .then(({ initToolbar }) => {
+          const stagewiseConfig = {
+            plugins: [],
+          };
+          
+          // Initialize toolbar
+          initToolbar(stagewiseConfig);
+        })
+        .catch((error) => {
+          console.warn('Failed to initialize stagewise toolbar:', error);
+        });
     }
   }, []);
 
-  // 在开发模式下返回一个隐藏的div作为容器
-  if (process.env.NODE_ENV === 'development') {
-    return <div id="stagewise-toolbar-container" style={{ display: 'none' }} />;
-  }
-
+  // Return null in all cases - the toolbar is managed by the imported library
   return null;
 } 
