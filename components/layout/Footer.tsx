@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BrainIcon } from '@/components/icons/BrainIcon';
+import Image from 'next/image';
 import { Github, Twitter, Youtube } from 'lucide-react';
 
 export function Footer() {
@@ -37,7 +37,13 @@ export function Footer() {
           {/* Logo and description */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center space-x-3 mb-4">
-              <BrainIcon className="w-8 h-8" />
+              <Image 
+                src="/icon128.png"
+                alt="ComicMind Logo"
+                width={128}
+                height={128}
+                className="w-8 h-8"
+              />
               <span className="text-2xl font-semibold text-text">ComicMind</span>
             </Link>
             <p className="text-text-muted text-sm leading-relaxed max-w-md">
