@@ -48,20 +48,20 @@ export function ProcessTimeline() {
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
-              <div key={index} className="relative">
-                {/* Card with icon embedded in top-left */}
-                <div className="bg-neutral-card rounded-xl p-6 shadow-soft relative">
+              <div key={index} className="relative h-full">
+                {/* Card with consistent height and icon embedded in top-left */}
+                <div className="bg-neutral-card rounded-xl p-6 shadow-soft h-full flex flex-col">
                   {/* Icon in top-left corner */}
-                  <div className={`${step.bgColor} rounded-full p-3 w-fit mb-6`}>
+                  <div className={`${step.bgColor} rounded-full p-3 w-fit mb-6 flex-shrink-0`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   
-                  {/* Content */}
-                  <div>
-                    <h3 className="text-xl font-semibold text-text mb-3">
+                  {/* Content - flex-grow to fill remaining space */}
+                  <div className="flex-grow flex flex-col">
+                    <h3 className="text-xl font-semibold text-text mb-3 flex-shrink-0">
                       {step.title}
                     </h3>
-                    <p className="text-text-muted leading-relaxed">
+                    <p className="text-text-muted leading-relaxed flex-grow">
                       {step.description}
                     </p>
                   </div>
