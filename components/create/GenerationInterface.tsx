@@ -23,25 +23,39 @@ export function GenerationInterface() {
 
   const aspectRatioOptions = [
     { 
-      value: '16:9', 
-      label: 'Landscape', 
-      ratio: '16:9',
-      dimensions: 'w-full aspect-video',
-      shapeClass: 'w-16 h-9'
+      value: '1:1', 
+      label: 'Square', 
+      ratio: '1:1',
+      dimensions: 'w-full aspect-square',
+      shapeClass: 'w-6 h-6'
+    },
+    { 
+      value: '3:4', 
+      label: 'Portrait', 
+      ratio: '3:4',
+      dimensions: 'w-full aspect-[3/4]',
+      shapeClass: 'w-5 h-7'
+    },
+    { 
+      value: '9:16', 
+      label: 'Vertical', 
+      ratio: '9:16',
+      dimensions: 'w-full aspect-[9/16]',
+      shapeClass: 'w-4 h-7'
     },
     { 
       value: '4:3', 
       label: 'Standard', 
       ratio: '4:3',
       dimensions: 'w-full aspect-[4/3]',
-      shapeClass: 'w-12 h-9'
+      shapeClass: 'w-8 h-6'
     },
     { 
-      value: '1:1', 
-      label: 'Square', 
-      ratio: '1:1',
-      dimensions: 'w-full aspect-square',
-      shapeClass: 'w-9 h-9'
+      value: '16:9', 
+      label: 'Landscape', 
+      ratio: '16:9',
+      dimensions: 'w-full aspect-video',
+      shapeClass: 'w-10 h-6'
     },
   ];
 
@@ -140,13 +154,13 @@ export function GenerationInterface() {
                 <label className="block text-lg font-semibold text-text">
                   Aspect Ratio
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-5 gap-2">
                   {aspectRatioOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => setAspectRatio(option.value)}
                       disabled={generationState.isGenerating}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                      className={`p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                         aspectRatio === option.value
                           ? 'border-primary bg-primary/5 shadow-soft'
                           : 'border-border bg-neutral-bg hover:border-primary/50'
@@ -160,7 +174,7 @@ export function GenerationInterface() {
                         
                         {/* Label */}
                         <div className="text-center">
-                          <div className={`text-sm font-medium ${
+                          <div className={`text-xs font-medium ${
                             aspectRatio === option.value ? 'text-primary' : 'text-text'
                           }`}>
                             {option.label}
