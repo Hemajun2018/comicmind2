@@ -15,13 +15,10 @@ interface GenerationState {
 
 export function GenerationInterface() {
   const [input, setInput] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('16:9');
-  const [style, setStyle] = useState('kawaii');
   const [language, setLanguage] = useState('english');
-  const [generatedStructure, setGeneratedStructure] = useState('');
-  const [editableStructure, setEditableStructure] = useState('');
-  const [isEditingStructure, setIsEditingStructure] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [style, setStyle] = useState('kawaii');
+  const [aspectRatio, setAspectRatio] = useState('4:3');
+
   const [generationState, setGenerationState] = useState<GenerationState>({
     step: 'input',
     isGeneratingStructure: false,
@@ -30,6 +27,12 @@ export function GenerationInterface() {
     hasImage: false,
     error: null,
   });
+
+  const [generatedStructure, setGeneratedStructure] = useState('');
+  const [editableStructure, setEditableStructure] = useState('');
+  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  
+  const [showStructureModal, setShowStructureModal] = useState(false);
 
   const aspectRatioOptions = [
     { 
@@ -128,6 +131,7 @@ export function GenerationInterface() {
         error: null,
       });
 
+      setShowStructureModal(true);
       toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
     } catch (error) {
       console.error('Structure generation error:', error);
@@ -210,19 +214,16 @@ export function GenerationInterface() {
     }
   };
 
-  const handleEditStructure = () => {
-    setIsEditingStructure(true);
-  };
-
-  const handleSaveStructure = () => {
-    setGeneratedStructure(editableStructure);
-    setIsEditingStructure(false);
-    toast.success('Structure saved');
-  };
-
-  const handleCancelEdit = () => {
+  const handleCloseModal = () => {
+    setShowStructureModal(false);
+    // Discard changes when closing modal
     setEditableStructure(generatedStructure);
-    setIsEditingStructure(false);
+  };
+
+  const handleConfirmStructure = () => {
+    setShowStructureModal(false);
+    // 结构确认后，直接开始生成图片
+    handleGenerateImage();
   };
 
   const handleRegenerate = () => {
@@ -257,7 +258,7 @@ export function GenerationInterface() {
     setGeneratedStructure('');
     setEditableStructure('');
     setGeneratedImageUrl('');
-    setIsEditingStructure(false);
+    setShowStructureModal(false);
   };
 
   const selectedAspectRatio = aspectRatioOptions.find(option => option.value === aspectRatio);
@@ -289,55 +290,7 @@ export function GenerationInterface() {
                 </div>
               </div>
 
-              {/* Mind Map Structure Editing Area */}
-              {generationState.hasStructure && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-lg font-semibold text-text">
-                      Mind Map Structure
-                    </label>
-                    {!isEditingStructure ? (
-                      <button
-                        onClick={handleEditStructure}
-                        className="text-primary hover:text-primary/80 flex items-center space-x-1"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Edit</span>
-                      </button>
-                    ) : (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={handleSaveStructure}
-                          className="text-green-600 hover:text-green-700 flex items-center space-x-1"
-                        >
-                          <Check className="w-4 h-4" />
-                                                      <span>Save</span>
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-red-600 hover:text-red-700 flex items-center space-x-1"
-                        >
-                          <X className="w-4 h-4" />
-                                                      <span>Cancel</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {isEditingStructure ? (
-                    <textarea
-                      value={editableStructure}
-                      onChange={(e) => setEditableStructure(e.target.value)}
-                      className="w-full h-48 p-4 border border-border rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg font-mono text-sm"
-                                              placeholder="Edit mind map structure..."
-                    />
-                  ) : (
-                    <div className="w-full h-48 p-4 border border-border rounded-xl bg-neutral-bg overflow-y-auto">
-                      <pre className="text-sm text-text font-mono whitespace-pre-wrap">{generatedStructure}</pre>
-                    </div>
-                  )}
-                </div>
-              )}
+
 
               {/* Aspect Ratio - Visual Selection */}
               <div className="space-y-4">
@@ -480,9 +433,9 @@ export function GenerationInterface() {
                   </div>
                   <button
                     onClick={handleStartOver}
-                    className="w-full border border-border text-text-muted px-4 py-2 rounded-xl font-medium hover:bg-neutral-bg transition-colors-smooth"
+                    className="w-full bg-primary text-white px-6 py-3 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft"
                   >
-                    Start Over
+                    Create New
                   </button>
                 </div>
               )}
@@ -647,6 +600,59 @@ export function GenerationInterface() {
             </button>
           )}
         </div>
+
+        {/* Structure Review Modal */}
+        {showStructureModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-primary to-accent p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Mind Map Structure Generated!</h2>
+                    <p className="text-white/90">Please review and edit the structure below, then click "Generate Image" to create your mind map.</p>
+                  </div>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 max-h-[50vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Mind Map Structure</h3>
+                  <textarea
+                    value={editableStructure}
+                    onChange={(e) => setEditableStructure(e.target.value)}
+                    className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors font-mono text-sm bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 p-6">
+                <div className="flex justify-end space-x-4">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleConfirmStructure}
+                    className="px-6 py-3 bg-accent text-white rounded-xl font-semibold hover:bg-accent/90 transition-colors"
+                  >
+                    Generate Image
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
