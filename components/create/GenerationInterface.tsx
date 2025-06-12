@@ -24,38 +24,33 @@ export function GenerationInterface() {
   const aspectRatioOptions = [
     { 
       value: '1:1', 
-      label: 'Square', 
       ratio: '1:1',
       dimensions: 'w-full aspect-square',
-      shapeClass: 'w-6 h-6'
+      shapeClass: 'w-4 h-4'
     },
     { 
       value: '3:4', 
-      label: 'Portrait', 
       ratio: '3:4',
       dimensions: 'w-full aspect-[3/4]',
-      shapeClass: 'w-5 h-7'
+      shapeClass: 'w-3 h-4'
     },
     { 
       value: '9:16', 
-      label: 'Vertical', 
       ratio: '9:16',
       dimensions: 'w-full aspect-[9/16]',
-      shapeClass: 'w-4 h-7'
+      shapeClass: 'w-2 h-4'
     },
     { 
       value: '4:3', 
-      label: 'Standard', 
       ratio: '4:3',
       dimensions: 'w-full aspect-[4/3]',
-      shapeClass: 'w-8 h-6'
+      shapeClass: 'w-5 h-4'
     },
     { 
       value: '16:9', 
-      label: 'Landscape', 
       ratio: '16:9',
       dimensions: 'w-full aspect-video',
-      shapeClass: 'w-10 h-6'
+      shapeClass: 'w-6 h-3'
     },
   ];
 
@@ -160,30 +155,23 @@ export function GenerationInterface() {
                       key={option.value}
                       onClick={() => setAspectRatio(option.value)}
                       disabled={generationState.isGenerating}
-                      className={`p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                      className={`p-2 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                         aspectRatio === option.value
                           ? 'border-primary bg-primary/5 shadow-soft'
                           : 'border-border bg-neutral-bg hover:border-primary/50'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="flex flex-col items-center space-y-2">
+                      <div className="flex flex-col items-center space-y-1">
                         {/* Visual Shape */}
                         <div className={`${option.shapeClass} bg-gradient-to-br from-primary/20 to-accent/20 rounded border-2 ${
                           aspectRatio === option.value ? 'border-primary' : 'border-border'
                         }`}></div>
                         
-                        {/* Label */}
-                        <div className="text-center">
-                          <div className={`text-xs font-medium ${
-                            aspectRatio === option.value ? 'text-primary' : 'text-text'
-                          }`}>
-                            {option.label}
-                          </div>
-                          <div className={`text-xs ${
-                            aspectRatio === option.value ? 'text-primary/80' : 'text-text-muted'
-                          }`}>
-                            {option.ratio}
-                          </div>
+                        {/* Ratio Label */}
+                        <div className={`text-xs font-medium ${
+                          aspectRatio === option.value ? 'text-primary' : 'text-text-muted'
+                        }`}>
+                          {option.ratio}
                         </div>
                       </div>
                     </button>
@@ -401,7 +389,7 @@ export function GenerationInterface() {
 
               {/* Preview Info */}
               <div className="text-sm text-text-muted">
-                Preview will show your generated mind map in {selectedAspectRatio?.label.toLowerCase()} format ({selectedAspectRatio?.ratio})
+                Preview will show your generated mind map in {selectedAspectRatio?.ratio} format
               </div>
             </div>
           </div>
