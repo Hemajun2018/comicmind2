@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { StagewiseToolbar } from '@/components/StagewiseToolbar';
+import { AuthProvider } from '@/lib/auth/AuthContext';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -22,13 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={inter.className}>
-        <StagewiseToolbar />
-        <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
-        <Toaster position="bottom-left" />
+        <AuthProvider>
+          <StagewiseToolbar />
+          <Header />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+          <Toaster position="bottom-left" />
+        </AuthProvider>
       </body>
     </html>
   );

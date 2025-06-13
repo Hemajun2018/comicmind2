@@ -44,46 +44,31 @@ export function ProcessTimeline() {
           </p>
         </div>
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-border transform -translate-y-1/2"></div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={index} className="relative">
-                  {/* Timeline connector */}
-                  <div className="hidden lg:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                    <div className={`${step.bgColor} rounded-full p-4 shadow-soft`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <div key={index} className="relative h-full">
+                {/* Card with consistent height and icon embedded in top-left */}
+                <div className="bg-neutral-card rounded-xl p-6 shadow-soft h-full flex flex-col">
+                  {/* Icon in top-left corner */}
+                  <div className={`${step.bgColor} rounded-full p-3 w-fit mb-6 flex-shrink-0`}>
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
                   
-                  {/* Card */}
-                  <div className="bg-neutral-card rounded-xl p-6 shadow-soft mt-16 lg:mt-24">
-                    <div className="lg:hidden mb-4">
-                      <div className={`${step.bgColor} ${step.color} rounded-xl p-3 w-fit`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                    
-                    <div className="text-center lg:text-left">
-                      <div className="text-sm font-medium text-text-muted mb-2">
-                        Step {index + 1}
-                      </div>
-                      <h3 className="text-xl font-semibold text-text mb-3">
-                        {step.title}
-                      </h3>
-                      <p className="text-text-muted leading-relaxed">
-                        {step.description}
-                      </p>
-                    </div>
+                  {/* Content - flex-grow to fill remaining space */}
+                  <div className="flex-grow flex flex-col">
+                    <h3 className="text-xl font-semibold text-text mb-3 flex-shrink-0">
+                      {step.title}
+                    </h3>
+                    <p className="text-text-muted leading-relaxed flex-grow">
+                      {step.description}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
