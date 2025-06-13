@@ -1,5 +1,4 @@
 import { createClient } from './client'
-import { createClient as createServerClient } from './server'
 import type { Database } from './types'
 
 // 客户端工具函数
@@ -138,7 +137,5 @@ export async function getUserSubscription(userId: string) {
   return data
 }
 
-// 服务端工具函数（用于 API 路由）
-export function getServerSupabase() {
-  return createServerClient()
-} 
+// 注意：服务端工具函数应该在 API 路由中直接导入 server.ts
+// 这里不导入服务器组件以避免客户端/服务器组件冲突 
