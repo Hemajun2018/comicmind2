@@ -96,6 +96,22 @@ npm run dev
 
 ## 📝 更新日志
 
+### 2024-01-XX - Next.js 架构错误修复
+
+#### 🔧 修复内容
+- 修复 ReactServerComponentsError 错误
+- 创建缺失的 UserNav 组件
+- 重构 test-auth 页面为服务器/客户端分离架构
+- 修复 utils.ts 中的服务器组件导入冲突
+- 添加 webpack 配置忽略 WebSocket 依赖警告
+- 遵循 Next.js App Router 最佳实践
+
+#### 🏗️ 架构改进
+- 严格分离服务器组件和客户端组件
+- 页面组件只处理 metadata，交互逻辑分离到客户端组件
+- 移除客户端组件中的服务器依赖导入
+- 优化 Supabase 客户端配置
+
 ### 2024-01-XX - Supabase 认证系统集成
 
 #### ✅ 已完成
