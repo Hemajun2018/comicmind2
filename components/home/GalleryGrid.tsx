@@ -32,7 +32,7 @@ export function GalleryGrid() {
           </p>
         </div>
 
-        <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 lg:gap-6 space-y-4 lg:space-y-6">
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 lg:gap-6 space-y-4 lg:space-y-6">
           {images.map((img, index) => (
             <div
               key={index}
