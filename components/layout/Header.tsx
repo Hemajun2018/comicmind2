@@ -208,55 +208,71 @@ export function Header() {
                 ))}
                 
                 {/* 移动端语言选择器和认证区域 */}
-                <div className="pt-4 border-t border-border space-y-4">
-                  {/* Language Selector for Mobile */}
-                  <div className="flex justify-center">
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-muted font-medium">Language</span>
                     <LanguageSelector />
                   </div>
-                  
-                  {/* 移动端用户认证区域 */}
-                  {loading ? (
-                    <div className="flex justify-center">
-                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : user ? (
-                    // 已登录用户信息和登出按钮
-                    <div className="space-y-3">
-                      <div className="text-center">
-                        <p className="text-text font-medium">
-                          {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-                        </p>
-                        <p className="text-sm text-text-muted">{user.email}</p>
+                  <div className="mt-6">
+                    {loading ? (
+                      <div className="flex justify-center">
+                         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       </div>
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center justify-center space-x-2 bg-neutral-bg border border-border text-text px-8 py-4 rounded-xl font-medium text-lg hover:bg-neutral-card transition-colors-smooth"
+                    ) : user ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || 'User'} />
+                            <AvatarFallback>
+                              {getInitials(user.user_metadata?.full_name || user.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-text truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
+                            <p className="text-sm text-text-muted truncate">{user.email}</p>
+                          </div>
+                        </div>
+                         <Link
+                          href="/settings"
+                          className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-center text-text bg-neutral-bg rounded-xl hover:bg-neutral-card transition-colors-smooth"
+                          onClick={() => setIsMenuOpen(false)} // 点击后关闭菜单
+                        >
+                          <Settings className="w-5 h-5" />
+                          <span>Settings</span>
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-left text-text bg-neutral-bg rounded-xl hover:bg-neutral-card transition-colors-smooth"
+                        >
+                          <LogOut className="w-5 h-5" />
+                          <span>Sign out</span>
+                        </button>
+                      </div>
+                    ) : (
+                       <button
+                        onClick={handleSignInClick}
+                        className="w-full bg-accent text-white px-8 py-3 rounded-xl font-medium text-lg hover-darken active-darken transition-colors-smooth shadow-soft"
                       >
-                        <LogOut className="w-5 h-5" />
-                        <span>Sign out</span>
+                        Sign in
                       </button>
-                    </div>
-                  ) : (
-                    // 未登录用户的登录按钮
-                    <button
-                      onClick={handleSignInClick}
-                      className="bg-accent text-white px-8 py-4 rounded-xl font-medium text-lg hover-darken active-darken transition-colors-smooth shadow-soft text-center block w-full"
-                    >
-                      Sign in
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
+
               </div>
             </div>
           )}
         </div>
       </header>
 
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-      />
+      {/* 认证模态框 */}
+      {/* 只有在 isAuthModalOpen 为 true 时，才会渲染模态框 */}
+      {isAuthModalOpen && (
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+        />
+      )}
     </>
   );
 }
