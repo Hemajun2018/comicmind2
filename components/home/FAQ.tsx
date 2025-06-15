@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import {
+  Accordion,
+} from '@/components/ui/accordion';
 
 export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -38,8 +41,8 @@ export function FAQ() {
   };
 
   return (
-    <section id="faqs" className="py-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+    <section id="faqs" className="py-20 bg-gradient-to-br from-neutral-bg to-neutral-card">
+      <div className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-semibold text-text mb-4">
             Frequently asked questions
@@ -84,14 +87,22 @@ export function FAQ() {
           <p className="text-text-muted mb-4">
             Still have questions?
           </p>
-          <a
+          <Link
             href="/help"
             className="text-primary hover:text-primary/80 font-medium transition-colors-smooth"
           >
             Visit our help center →
-          </a>
+          </Link>
         </div>
       </div>
     </section>
+  );
+}
+
+function Link({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
   );
 }

@@ -28,13 +28,13 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-neutral-card border-t border-border text-text">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+    <footer className="bg-gradient-to-br from-neutral-bg to-neutral-card border-t border-border text-text">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12">
         {/* Top section with logo and links */}
-        <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Logo and description */}
-          <div className="md:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4">
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <Image 
                 src="/icon128.png"
@@ -51,7 +51,7 @@ export function Footer() {
           </div>
 
           {/* Links grid */}
-          <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
             {footerSections.map((section) => (
               <div key={section.title}>
                 <h3 className="font-semibold mb-4">{section.title}</h3>
