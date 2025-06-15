@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { checkDailyLimit } from '@/lib/supabase/utils';
 
 interface GenerationState {
   step: 'input' | 'structure' | 'image';
@@ -15,10 +17,16 @@ interface GenerationState {
 }
 
 export function GenerationInterface() {
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   const [language, setLanguage] = useState('english');
   const [style, setStyle] = useState('kawaii');
   const [aspectRatio, setAspectRatio] = useState('4:3');
+  
+  // 限制状态管理
+  const [hasQuota, setHasQuota] = useState(true);
+  const [quotaLoading, setQuotaLoading] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const [generationState, setGenerationState] = useState<GenerationState>({
     step: 'input',
@@ -34,6 +42,27 @@ export function GenerationInterface() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   
   const [showStructureModal, setShowStructureModal] = useState(false);
+
+  // 检查用户限制
+  useEffect(() => {
+    const checkUserQuota = async () => {
+      setQuotaLoading(true);
+      try {
+        // 模拟获取客户端IP（实际应用中需要从服务端获取）
+        const mockIP = '127.0.0.1';
+        const quota = await checkDailyLimit(user?.id, mockIP);
+        setHasQuota(quota);
+      } catch (error) {
+        console.error('检查限制失败:', error);
+        // 如果检查失败，默认允许使用
+        setHasQuota(true);
+      } finally {
+        setQuotaLoading(false);
+      }
+    };
+
+    checkUserQuota();
+  }, [user]);
 
   const aspectRatioOptions = [
     { 
@@ -118,6 +147,21 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
+        // 检查是否是限制达到的错误
+        if (data.code === 'DAILY_LIMIT_REACHED') {
+          setHasQuota(false);
+          setShowUpgradePrompt(true);
+          toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
+          setGenerationState({
+            step: 'input',
+            isGeneratingStructure: false,
+            isGeneratingImage: false,
+            hasStructure: false,
+            hasImage: false,
+            error: null,
+          });
+          return;
+        }
         throw new Error(data.error || 'Structure generation failed');
       }
 
@@ -134,6 +178,9 @@ export function GenerationInterface() {
 
       setShowStructureModal(true);
       toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
+      
+      // 生成成功后重新检查限制状态
+      setHasQuota(false); // 假设结构生成消耗了一次机会
     } catch (error) {
       console.error('Structure generation error:', error);
       setGenerationState({
@@ -182,6 +229,21 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
+        // 检查是否是限制达到的错误
+        if (data.code === 'DAILY_LIMIT_REACHED') {
+          setHasQuota(false);
+          setShowUpgradePrompt(true);
+          toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
+          setGenerationState({
+            step: 'structure',
+            isGeneratingStructure: false,
+            isGeneratingImage: false,
+            hasStructure: true,
+            hasImage: false,
+            error: null,
+          });
+          return;
+        }
         throw new Error(data.error || 'Image generation failed');
       }
 
@@ -371,11 +433,31 @@ export function GenerationInterface() {
                 </select>
               </div>
 
+              {/* 限制提示 */}
+              {!hasQuota && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-yellow-800 mb-1">每日限制已达上限</h4>
+                      <p className="text-sm text-yellow-700">免费用户每日可创建3个思维导图。升级到Pro版本享受无限制使用！</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => window.open('/settings', '_blank')}
+                    className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>立即升级到Pro</span>
+                  </button>
+                </div>
+              )}
+
               {/* Step 1: Generate Structure Button */}
               {generationState.step === 'input' && (
                 <button
                   onClick={handleGenerateStructure}
-                  disabled={generationState.isGeneratingStructure || !input.trim()}
+                  disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
                   className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {generationState.isGeneratingStructure ? (
@@ -396,7 +478,7 @@ export function GenerationInterface() {
               {generationState.hasStructure && !generationState.hasImage && (
                 <button
                   onClick={handleGenerateImage}
-                  disabled={generationState.isGeneratingImage}
+                  disabled={generationState.isGeneratingImage || !hasQuota}
                   className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {generationState.isGeneratingImage ? (
@@ -564,7 +646,7 @@ export function GenerationInterface() {
           {generationState.step === 'input' && (
             <button
               onClick={handleGenerateStructure}
-              disabled={generationState.isGeneratingStructure || !input.trim()}
+              disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
               className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {generationState.isGeneratingStructure ? (
@@ -584,7 +666,7 @@ export function GenerationInterface() {
           {generationState.hasStructure && !generationState.hasImage && (
             <button
               onClick={handleGenerateImage}
-              disabled={generationState.isGeneratingImage}
+              disabled={generationState.isGeneratingImage || !hasQuota}
               className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {generationState.isGeneratingImage ? (

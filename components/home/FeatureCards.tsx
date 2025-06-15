@@ -25,15 +25,15 @@ export function FeatureCards() {
     },
     {
       icon: Zap,
-      title: 'Instant Generation',
-      description: 'Get your comic mind map in seconds, not minutes. No complex software or design skills required.',
+      title: 'Easy Generation',
+      description: 'Create beautiful mind maps with simple text input. No complex software or professional design skills required.',
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
   ];
 
   return (
-    <div>
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
       <div className="text-center mb-16">
         <h2 className="text-3xl sm:text-4xl font-semibold text-text mb-4">
           Why choose ComicMind?

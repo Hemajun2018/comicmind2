@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { checkDailyLimit, getUserSubscription } from '@/lib/supabase/utils';
 
 // 使用原始的API地址（经测试这个是正确的）
 const API_URL = 'https://ismaque.org/v1/chat/completions';
@@ -7,6 +9,29 @@ const API_KEY = 'sk-uaVHEzg9zWASWVj0uZ6DZXGSxVq1nkNlQg3Bq9DEsDBXmPqU';
 export async function POST(request: Request) {
   try {
     const { structure, style = 'kawaii', ratio = '16:9', language = 'english' } = await request.json();
+
+    // 获取用户信息和IP地址
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const clientIP = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     '127.0.0.1';
+
+    // 检查用户每日限制
+    try {
+      const hasQuota = await checkDailyLimit(user?.id, clientIP);
+      if (!hasQuota) {
+        return NextResponse.json({ 
+          error: 'Daily limit reached',
+          message: 'You have reached your daily limit of 3 mind maps. Upgrade to Pro for unlimited access.',
+          code: 'DAILY_LIMIT_REACHED',
+          upgradeRequired: true
+        }, { status: 429 });
+      }
+    } catch (limitError) {
+      console.error('Error checking daily limit:', limitError);
+      // 如果限制检查失败，为了用户体验继续处理但记录错误
+    }
 
     // Create a specialized prompt for comic mind maps based on the structure
     const styleDescriptions = {
