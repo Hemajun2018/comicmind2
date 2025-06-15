@@ -7,10 +7,10 @@ import { FAQ } from '@/components/home/FAQ';
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gradient-to-br from-neutral-bg to-neutral-card">
       <HeroSection />
       <GalleryGrid />
-      <section id="features" className="py-20 bg-neutral-card">
+      <section id="features" className="py-20">
         <FeatureCards />
       </section>
       <ProcessTimeline />

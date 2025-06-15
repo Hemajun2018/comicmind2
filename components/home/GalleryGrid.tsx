@@ -21,7 +21,7 @@ const images = [
 
 export function GalleryGrid() {
   return (
-    <section className="py-20 bg-neutral-card">
+    <section className="py-20">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-semibold text-text mb-4">
@@ -32,7 +32,7 @@ export function GalleryGrid() {
           </p>
         </div>
 
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 lg:gap-6 space-y-4 lg:space-y-6">
+        <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 lg:gap-6 space-y-4 lg:space-y-6">
           {images.map((img, index) => (
             <div
               key={index}
