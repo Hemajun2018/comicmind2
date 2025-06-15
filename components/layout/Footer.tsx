@@ -51,7 +51,7 @@ export function Footer() {
           </div>
 
           {/* Links grid */}
-          <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:justify-end">
             {footerSections.map((section) => (
               <div key={section.title}>
                 <h3 className="font-semibold mb-4">{section.title}</h3>
