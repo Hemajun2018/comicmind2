@@ -31,8 +31,14 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
   const currentPlan = subscription ? 'Pro' : 'Free';
   const planDetails = subscription ? features.premium : features.free;
 
-  // 处理升级逻辑
+  // 处理升级逻辑 - 暂时禁用，显示开发中提示
   const handleUpgrade = async () => {
+    // 暂时禁用支付功能，等待Creem配置完成
+    alert('支付功能开发中，敬请期待！\n\n如需立即升级，请联系客服。');
+    return;
+    
+    // 以下代码将在Creem配置完成后启用
+    /*
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -55,6 +61,7 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
       console.error('升级处理错误:', error);
       // 这里可以显示错误提示给用户
     }
+    */
   };
 
   // 处理订阅管理
@@ -128,8 +135,8 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
             <p className="mt-6 text-center text-lg text-text">
                 Upgrade to Pro for just <span className="font-bold text-yellow-400">$12/month</span> and unlock unlimited creativity
             </p>
-            <Button onClick={handleUpgrade} className="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-6">
-                Upgrade Now <Zap className="w-5 h-5 ml-2" />
+            <Button onClick={handleUpgrade} className="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-lg py-6" disabled={false}>
+                Coming Soon - Pro Version <Zap className="w-5 h-5 ml-2" />
             </Button>
           </div>
         )}
