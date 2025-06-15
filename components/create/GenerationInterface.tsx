@@ -353,8 +353,6 @@ export function GenerationInterface() {
                 </div>
               </div>
 
-
-
               {/* Aspect Ratio - Visual Selection */}
               <div className="space-y-4">
                 <label className="block text-lg font-semibold text-text">
@@ -450,6 +448,67 @@ export function GenerationInterface() {
                     <Crown className="w-4 h-4" />
                     <span>立即升级到Pro</span>
                   </button>
+                </div>
+              )}
+
+              {/* 使用统计显示 */}
+              {user && (
+                <div className="p-4 rounded-xl bg-neutral-bg border border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      <span className="text-sm font-medium text-text">Today's Usage</span>
+                    </div>
+                    <div className="text-right">
+                      {quotaLoading ? (
+                        <span className="text-sm text-text-muted">Checking...</span>
+                      ) : (
+                        <span className={`text-sm font-medium ${hasQuota ? 'text-blue-600' : 'text-red-600'}`}>
+                          {hasQuota ? 'Available' : '3/3 Used'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 w-full bg-neutral-border rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        hasQuota ? 'bg-blue-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: hasQuota ? '30%' : '100%' }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    Free users: 3 mind maps per day • Pro users: Unlimited
+                  </p>
+                </div>
+              )}
+
+              {/* 匿名用户提示 */}
+              {!user && (
+                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <span className="text-blue-600 text-sm font-semibold">?</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-800 mb-1">Anonymous User</h4>
+                      <p className="text-sm text-blue-700">You can create 3 mind maps per day. Sign up for more benefits!</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex space-x-2">
+                    <button 
+                      onClick={() => window.open('/auth', '_blank')}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Sign Up Free
+                    </button>
+                    <button 
+                      onClick={() => window.open('/settings', '_blank')}
+                      className="flex-1 border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Learn More
+                    </button>
+                  </div>
                 </div>
               )}
 

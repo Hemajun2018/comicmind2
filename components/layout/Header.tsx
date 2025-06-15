@@ -54,7 +54,7 @@ export function Header() {
   const navigation = [
     { name: 'Features', href: '/#features' },  // 功能页面
     { name: 'FAQs', href: '/#faqs' },         // 常见问题页面
-    { name: 'Pricing', href: '/#pricing' },   // 定价页面
+    { name: 'Pricing', href: '/pricing' },    // 专门的定价页面
     
   ];
 
