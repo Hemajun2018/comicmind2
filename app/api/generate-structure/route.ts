@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { checkDailyLimit, recordUsage, getUserSubscription } from '@/lib/supabase/utils';
 
 // 使用麻雀API平台的Gemini模型
-const API_URL = 'https://ismaque.org/v1/chat/completions';
-const API_KEY = 'sk-uaVHEzg9zWASWVj0uZ6DZXGSxVq1nkNlQg3Bq9DEsDBXmPqU';
+const API_URL = process.env.GEMINI_API_URL || 'https://ismaque.org/v1/chat/completions';
+const API_KEY = process.env.GEMINI_API_KEY;
 
 export async function POST(request: Request) {
   try {

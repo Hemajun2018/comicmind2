@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { UserProfileCard } from './components/user-profile-card';
-import { PlansBillingCard } from './components/plans-billing-card';
+import { SettingsContent } from './components/settings-content';
 import type { Database } from '@/lib/supabase/types';
 
 // 从数据库类型中获取订阅的行类型
@@ -32,16 +31,9 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold mb-10 text-text">Settings</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
-        <div className="lg:col-span-2">
-          <UserProfileCard user={user} />
-        </div>
-        <div className="lg:col-span-3">
-          <PlansBillingCard subscription={subscription as Subscription | null} />
-        </div>
-      </div>
-    </div>
+    <SettingsContent 
+      user={user} 
+      subscription={subscription as Subscription | null} 
+    />
   );
 } 
