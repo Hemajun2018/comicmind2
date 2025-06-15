@@ -2,21 +2,20 @@
 
 import Image from 'next/image';
 
-// 配置画廊图片，使用用户提供的所有图片
+// 配置画廊图片，按照数字顺序排列（1.png到12.png）
 const images = [
-  { src: '/gallery/gallery-1.png', alt: 'AI-generated comic mind map example 1' },
-  { src: '/gallery/gallery-2.png', alt: 'AI-generated comic mind map example 2' },
-  { src: '/gallery/gallery-3.png', alt: 'AI-generated comic mind map example 3' },
-  { src: '/gallery/gallery-4.png', alt: 'AI-generated comic mind map example 4' },
-  { src: '/gallery/gallery-5.png', alt: 'AI-generated comic mind map example 5' },
-  { src: '/gallery/gallery-6.png', alt: 'AI-generated comic mind map example 6' },
-  { src: '/gallery/VYZWWg0agg0TJEz3y7f1IIG3o6DIRa.png', alt: 'AI-generated comic mind map example 7' },
-  { src: '/gallery/chayd0QW7OxfKVHN1MGc70gmyFsdWB.png', alt: 'AI-generated comic mind map example 8' },
-  // The filenames below contain spaces and might cause issues.
-  // Next.js can often handle this, but it's better to rename them without spaces.
-  // For now, let's assume they work.
-  { src: '/gallery/ChatGPT Image 2025年6月15日 10_11_01.png', alt: 'AI-generated comic mind map example 9' },
-  { src: '/gallery/ChatGPT Image 2025年6月15日 10_10_15.png', alt: 'AI-generated comic mind map example 10' },
+  { src: '/gallery/1.png', alt: 'ComicMind思维导图示例 1' },
+  { src: '/gallery/2.png', alt: 'ComicMind思维导图示例 2' },
+  { src: '/gallery/3.png', alt: 'ComicMind思维导图示例 3' },
+  { src: '/gallery/4.png', alt: 'ComicMind思维导图示例 4' },
+  { src: '/gallery/5.png', alt: 'ComicMind思维导图示例 5' },
+  { src: '/gallery/6.png', alt: 'ComicMind思维导图示例 6' },
+  { src: '/gallery/7.png', alt: 'ComicMind思维导图示例 7' },
+  { src: '/gallery/8.png', alt: 'ComicMind思维导图示例 8' },
+  { src: '/gallery/9.png', alt: 'ComicMind思维导图示例 9' },
+  { src: '/gallery/10.png', alt: 'ComicMind思维导图示例 10' },
+  { src: '/gallery/11.png', alt: 'ComicMind思维导图示例 11' },
+  { src: '/gallery/12.png', alt: 'ComicMind思维导图示例 12' },
 ];
 
 export function GalleryGrid() {
@@ -32,20 +31,23 @@ export function GalleryGrid() {
           </p>
         </div>
 
-        <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 lg:gap-6 space-y-4 lg:space-y-6">
+        {/* 响应式网格布局：移动端1列，平板2列，桌面端3列，大屏4列 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
           {images.map((img, index) => (
             <div
               key={index}
-              className="break-inside-avoid rounded-xl overflow-hidden group transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-2xl hover:z-10 relative"
+              className="group relative overflow-hidden rounded-xl bg-neutral-bg shadow-soft hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105"
             >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                width={500}
-                height={500}
-                className="w-full h-auto object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 ease-in-out" />
+              <div className="aspect-[3/4.2] relative">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 ease-in-out" />
+              </div>
             </div>
           ))}
         </div>

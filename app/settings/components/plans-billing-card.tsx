@@ -14,20 +14,21 @@ interface PlansBillingCardProps {
 
 const features = {
   free: [
-    { text: 'Unlimited image generation', unavailable: false },
-    { text: 'Basic generation speed (20s)', unavailable: false },
-    { text: 'Basic Refine feature', unavailable: false },
+    { text: '3 mind maps per day', unavailable: false },
+    { text: 'Basic comic styles (5 styles)', unavailable: false },
+    { text: 'Standard resolution export', unavailable: false },
   ],
   premium: [
-    { text: '5x Faster Generation', unavailable: false },
-    { text: 'No Watermark', unavailable: false },
-    { text: 'Priority Queue', unavailable: false },
-    { text: 'Private Generation', unavailable: false },
+    { text: 'Unlimited mind map generation', unavailable: false },
+    { text: 'All premium comic styles (8+ styles)', unavailable: false },
+    { text: 'High-resolution exports', unavailable: false },
+    { text: 'Priority processing speed', unavailable: false },
+    { text: 'Commercial usage license', unavailable: false },
   ],
 };
 
 export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
-  const currentPlan = subscription ? 'Premium' : 'Free';
+  const currentPlan = subscription ? 'Pro' : 'Free';
   const planDetails = subscription ? features.premium : features.free;
 
   // TODO: Implement upgrade logic
@@ -69,7 +70,7 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
           <div className="p-6 rounded-lg bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-700/50">
             <div className="flex items-center space-x-2">
                 <Crown className="w-6 h-6 text-yellow-500" />
-                <h3 className="text-xl font-bold text-yellow-400">Premium Benefits</h3>
+                <h3 className="text-xl font-bold text-yellow-400">Pro Benefits</h3>
             </div>
             <ul className="space-y-3 mt-4">
                 {features.premium.map((feature) => (
@@ -80,7 +81,7 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
                 ))}
             </ul>
             <p className="mt-6 text-center text-lg text-text">
-                Upgrade to Premium for just <span className="font-bold text-yellow-400">$10/month</span> (annual billing)
+                Upgrade to Pro for just <span className="font-bold text-yellow-400">$12/month</span> and unlock unlimited creativity
             </p>
             <Button onClick={handleUpgrade} className="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-6">
                 Upgrade Now <Zap className="w-5 h-5 ml-2" />

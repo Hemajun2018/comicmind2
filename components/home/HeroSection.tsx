@@ -16,7 +16,7 @@ export function HeroSection() {
             </h1>
             
             <p className="text-xl text-text-muted mb-8 leading-relaxed">
-              No login. Free 3 images a day. Transform your ideas into beautiful, 
+              No login. Free try. Transform your ideas into beautiful, 
               hand-drawn style mind maps with AI magic.
             </p>
             

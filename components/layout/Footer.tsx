@@ -7,9 +7,9 @@ export function Footer() {
     {
       title: 'About us',
       links: [
-        { name: 'Features', href: '/features' },
-        { name: 'Pricing', href: '/pricing' },
-        { name: 'FAQs', href: '/docs' },
+        { name: 'Features', href: '/#features' },
+        { name: 'Pricing', href: '/#pricing' },
+        { name: 'FAQs', href: '/#faqs' },
       ],
     },
     {
@@ -34,7 +34,7 @@ export function Footer() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Logo and description */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <Image 
                 src="/icon128.png"
@@ -50,8 +50,8 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Links grid */}
-          <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:justify-end">
+          {/* Links grid - moved to the right */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-8 lg:justify-items-end">
             {footerSections.map((section) => (
               <div key={section.title}>
                 <h3 className="font-semibold mb-4">{section.title}</h3>
@@ -69,19 +69,11 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar with copyright and social links */}
-        <div className="flex flex-col sm:flex-row items-center justify-between py-6 border-t border-border">
+        {/* Bottom bar with copyright */}
+        <div className="flex justify-start py-6 border-t border-border">
           <p className="text-sm text-text-muted">
             &copy; {new Date().getFullYear()} Manthinking. All Rights Reserved.
           </p>
-          <div className="flex space-x-4 mt-4 sm:mt-0">
-            {socialLinks.map((social) => (
-              <Link key={social.name} href={social.href} className="text-text-muted hover:text-primary transition-colors-smooth" target="_blank" rel="noopener noreferrer">
-                <social.icon className="w-5 h-5" />
-                <span className="sr-only">{social.name}</span>
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

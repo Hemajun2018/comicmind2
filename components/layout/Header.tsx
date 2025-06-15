@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -29,6 +29,26 @@ export function Header() {
   // 获取用户认证状态
   const { user, loading, signOut } = useAuth();
   const pathname = usePathname();
+  
+  // 用户菜单引用，用于检测外部点击
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // 监听外部点击，关闭用户菜单
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   // 导航菜单配置：定义导航链接的名称和路径
   const navigation = [
@@ -119,17 +139,30 @@ export function Header() {
                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               ) : user ? (
                 // 已登录用户菜单
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center space-x-2 bg-neutral-bg border border-border px-3 py-2 rounded-xl hover:bg-neutral-card transition-colors-smooth"
                   >
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || 'User'} />
-                      <AvatarFallback className="text-sm">
-                        {getInitials(user.user_metadata?.full_name || user.email)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <img 
+                      src={user.user_metadata?.picture || user.user_metadata?.avatar_url} 
+                      alt={user.user_metadata?.full_name || user.user_metadata?.name || 'User'}
+                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onLoad={() => console.log('头像加载成功')}
+                      onError={(e) => {
+                        console.log('头像加载失败，URL:', e.currentTarget.src);
+                        console.log('用户数据:', user.user_metadata);
+                        // 尝试移除URL参数重新加载
+                        const originalSrc = e.currentTarget.src;
+                        if (originalSrc.includes('=s96-c')) {
+                          e.currentTarget.src = originalSrc.replace('=s96-c', '');
+                        } else {
+                          e.currentTarget.style.display = 'none';
+                        }
+                      }}
+                    />
                     <span className="text-text font-medium hidden sm:block">
                       {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                     </span>
@@ -221,12 +254,22 @@ export function Header() {
                     ) : user ? (
                       <div className="space-y-4">
                         <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || 'User'} />
-                            <AvatarFallback>
-                              {getInitials(user.user_metadata?.full_name || user.email)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <img 
+                            src={user.user_metadata?.picture || user.user_metadata?.avatar_url} 
+                            alt={user.user_metadata?.full_name || user.user_metadata?.name || 'User'}
+                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            onError={(e) => {
+                              console.log('移动端头像加载失败，URL:', e.currentTarget.src);
+                              const originalSrc = e.currentTarget.src;
+                              if (originalSrc.includes('=s96-c')) {
+                                e.currentTarget.src = originalSrc.replace('=s96-c', '');
+                              } else {
+                                e.currentTarget.style.display = 'none';
+                              }
+                            }}
+                          />
                           <div>
                             <p className="font-semibold text-text truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
                             <p className="text-sm text-text-muted truncate">{user.email}</p>

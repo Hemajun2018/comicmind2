@@ -83,17 +83,7 @@ export function FAQ() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-text-muted mb-4">
-            Still have questions?
-          </p>
-          <Link
-            href="/help"
-            className="text-primary hover:text-primary/80 font-medium transition-colors-smooth"
-          >
-            Visit our help center →
-          </Link>
-        </div>
+
       </div>
     </section>
   );
