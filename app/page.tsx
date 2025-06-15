@@ -9,11 +9,11 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <HeroSection />
+      <GalleryGrid />
       <section id="features" className="py-20 bg-neutral-card">
         <FeatureCards />
       </section>
       <ProcessTimeline />
-      <GalleryGrid />
       <PricingPreview />
       <FAQ />
     </main>
