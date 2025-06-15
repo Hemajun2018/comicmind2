@@ -3,103 +3,84 @@ import Image from 'next/image';
 import { Github, Twitter, Youtube } from 'lucide-react';
 
 export function Footer() {
-  const footerLinks = {
-    product: [
-      { name: 'Features', href: '/features' },
-      { name: 'Pricing', href: '/pricing' },
-      { name: 'Templates', href: '/templates' },
-      { name: 'API', href: '/api' },
-    ],
-    resources: [
-      { name: 'Blog', href: '/blog' },
-      { name: 'Help Center', href: '/help' },
-      { name: 'Community', href: '/community' },
-      { name: 'Tutorials', href: '/tutorials' },
-    ],
-    company: [
-      { name: 'About', href: '/about' },
-      { name: 'Privacy Policy', href: '/privacy' },
-      { name: 'Terms of Service', href: '/terms' },
-      { name: 'Contact', href: '/contact' },
-    ],
-  };
+  const footerSections = [
+    {
+      title: 'About us',
+      links: [
+        { name: 'Features', href: '/features' },
+        { name: 'Pricing', href: '/pricing' },
+        { name: 'FAQs', href: '/docs' },
+      ],
+    },
+    {
+      title: 'Legal',
+      links: [
+        { name: 'Privacy Policy', href: '/privacy' },
+        { name: 'Terms of Service', href: '/terms' },
+      ],
+    },
+  ];
 
   const socialLinks = [
-    { name: 'GitHub', icon: Github, href: 'https://github.com' },
-    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
-    { name: 'YouTube', icon: Youtube, href: 'https://youtube.com' },
+    { name: 'GitHub', href: 'https://github.com', icon: Github },
+    { name: 'Twitter', href: 'https://twitter.com', icon: Twitter },
+    { name: 'YouTube', href: 'https://youtube.com', icon: Youtube },
   ];
 
   return (
-    <footer className="bg-neutral-card border-t border-border">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+    <footer className="bg-neutral-card border-t border-border text-text">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        {/* Top section with logo and links */}
+        <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+          
           {/* Logo and description */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center space-x-3 mb-4">
+          <div className="md:col-span-1 space-y-4">
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <Image 
                 src="/icon128.png"
                 alt="ComicMind Logo"
-                width={128}
-                height={128}
-                className="w-8 h-8"
+                width={64}
+                height={64}
+                className="w-10 h-10"
               />
-              <span className="text-2xl font-semibold text-text">ComicMind</span>
+              <span className="text-2xl font-semibold">ComicMind</span>
             </Link>
-            <p className="text-text-muted text-sm leading-relaxed max-w-md">
-              Transform your ideas into beautiful comic-style mind maps with AI. 
-              Make learning and planning fun with hand-drawn illustrations and creative visualizations.
+            <p className="text-text-muted text-sm max-w-xs">
+              Transforming your ideas into stunning mind maps with the power of AI.
             </p>
-            
-            {/* Social links */}
-            <div className="flex space-x-4 mt-6">
-              {socialLinks.map((social) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    className="text-text-muted hover:text-primary transition-colors-smooth p-2 rounded-lg hover:bg-neutral-bg"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="sr-only">{social.name}</span>
-                  </a>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Footer links */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h3 className="text-text font-semibold mb-4 capitalize">{category}</h3>
-              <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-text-muted hover:text-primary transition-colors-smooth text-sm"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Links grid */}
+          <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
+            {footerSections.map((section) => (
+              <div key={section.title}>
+                <h3 className="font-semibold mb-4">{section.title}</h3>
+                <ul className="space-y-3">
+                  {section.links.map((link) => (
+                    <li key={link.name}>
+                      <Link href={link.href} className="text-text-muted hover:text-primary transition-colors-smooth text-sm">
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Bottom border */}
-        <div className="mt-12 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-text-muted text-sm">
-              © 2024 ComicMind. All rights reserved.
-            </p>
-            <p className="text-text-muted text-sm mt-4 md:mt-0">
-              Made with ❤️ for creative minds
-            </p>
+        {/* Bottom bar with copyright and social links */}
+        <div className="flex flex-col sm:flex-row items-center justify-between py-6 border-t border-border">
+          <p className="text-sm text-text-muted">
+            &copy; {new Date().getFullYear()} Manthinking. All Rights Reserved.
+          </p>
+          <div className="flex space-x-4 mt-4 sm:mt-0">
+            {socialLinks.map((social) => (
+              <Link key={social.name} href={social.href} className="text-text-muted hover:text-primary transition-colors-smooth" target="_blank" rel="noopener noreferrer">
+                <social.icon className="w-5 h-5" />
+                <span className="sr-only">{social.name}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

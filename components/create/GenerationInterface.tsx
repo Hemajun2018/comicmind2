@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 interface GenerationState {
   step: 'input' | 'structure' | 'image';
@@ -520,15 +521,15 @@ export function GenerationInterface() {
                   {/* Final Generated Image */}
                   {generationState.hasImage && generatedImageUrl && (
                     <div className="absolute inset-0">
-                      <img 
-                        src={generatedImageUrl} 
-                        alt="Generated Mind Map"
-                        className="w-full h-full object-contain rounded-xl"
-                        onError={() => {
-                          toast.error('Image loading failed');
-                          setGeneratedImageUrl('');
-                        }}
-                      />
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <div className="absolute inset-0 p-4">
+                          <img 
+                            src={generatedImageUrl} 
+                            alt="Generated Mind Map" 
+                            className="max-w-full max-h-full object-contain mx-auto my-auto rounded-xl"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 

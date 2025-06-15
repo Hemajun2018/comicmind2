@@ -38,7 +38,7 @@ export function FAQ() {
   };
 
   return (
-    <section className="py-20 bg-neutral-card">
+    <section id="faqs" className="py-20 bg-neutral-card">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-semibold text-text mb-4">

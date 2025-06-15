@@ -3,10 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+// 一个帮助函数，从姓名中获取首字母作为备用头像
+function getInitials(name: string) {
+  if (!name) return 'U';
+  const names = name.split(' ');
+  if (names.length > 1 && names[0] && names[names.length - 1]) {
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
 
 export function Header() {
   // 状态管理：控制移动端菜单的开启和关闭
@@ -16,13 +28,29 @@ export function Header() {
   
   // 获取用户认证状态
   const { user, loading, signOut } = useAuth();
+  const pathname = usePathname();
 
   // 导航菜单配置：定义导航链接的名称和路径
   const navigation = [
-    { name: 'Features', href: '/features' },  // 功能页面
-    { name: 'Pricing', href: '/pricing' },   // 定价页面
-    { name: 'Blog', href: '/blog' },         // 博客页面
+    { name: 'Features', href: '/#features' },  // 功能页面
+    { name: 'FAQs', href: '/#faqs' },         // 常见问题页面
+    { name: 'Pricing', href: '/#pricing' },   // 定价页面
+    
   ];
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname === '/' && href.startsWith('/#')) {
+      e.preventDefault();
+      const targetId = href.substring(2);
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    }
+    // 在其他页面，Next.js 的 Link 组件会处理导航
+  };
 
   const handleSignInClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,6 +97,7 @@ export function Header() {
                   <Link
                     key={item.name}          // React列表key
                     href={item.href}         // 链接地址
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     // 样式：灰色文字，悬停变主色，18px字体，中等粗细
                     className="text-text-muted hover:text-primary transition-colors-smooth font-medium text-lg"
                   >
@@ -93,20 +122,34 @@ export function Header() {
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-2 bg-neutral-bg border border-border px-4 py-2 rounded-xl hover:bg-neutral-card transition-colors-smooth"
+                    className="flex items-center space-x-2 bg-neutral-bg border border-border px-3 py-2 rounded-xl hover:bg-neutral-card transition-colors-smooth"
                   >
-                    <User className="w-5 h-5 text-text" />
-                    <span className="text-text font-medium">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || 'User'} />
+                      <AvatarFallback className="text-sm">
+                        {getInitials(user.user_metadata?.full_name || user.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-text font-medium hidden sm:block">
                       {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                     </span>
                   </button>
                   
                   {/* 用户下拉菜单 */}
                   {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-neutral-card border border-border rounded-xl shadow-soft py-2 z-50">
-                      <div className="px-4 py-2 border-b border-border">
-                        <p className="text-sm text-text-muted">{user.email}</p>
+                    <div className="absolute right-0 mt-2 w-56 bg-neutral-card border border-border rounded-xl shadow-soft py-2 z-50">
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="font-semibold text-text truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
+                        <p className="text-sm text-text-muted truncate">{user.email}</p>
                       </div>
+                      <Link
+                        href="/settings"
+                        className="w-full flex items-center space-x-2 px-4 py-2 text-left text-text hover:bg-neutral-bg transition-colors-smooth"
+                        onClick={() => setShowUserMenu(false)} // 点击后关闭菜单
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </Link>
                       <button
                         onClick={handleSignOut}
                         className="w-full flex items-center space-x-2 px-4 py-2 text-left text-text hover:bg-neutral-bg transition-colors-smooth"
@@ -155,7 +198,10 @@ export function Header() {
                     href={item.href}
                     // 样式：18px字体，垂直内边距8px
                     className="text-text-muted hover:text-primary transition-colors-smooth font-medium text-lg py-2"
-                    onClick={() => setIsMenuOpen(false)}  // 点击后关闭菜单
+                    onClick={(e) => {
+                      handleLinkClick(e, item.href);
+                      setIsMenuOpen(false); // 点击后关闭菜单
+                    }}
                   >
                     {item.name}
                   </Link>
