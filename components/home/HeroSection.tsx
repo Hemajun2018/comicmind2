@@ -8,18 +8,12 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left content */}
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text leading-tight mb-6">
-              <div className="mb-2">
-                Transfer your{' '}
-                <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">idea</span>
-              </div>
-              <div className="mb-2">
-                into{' '}
-                <span className="text-accent font-extrabold">interesting</span>
-              </div>
-              <div className="text-transparent bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text font-extrabold">
-                comic mind-maps
-              </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-text leading-tight mb-4">
+              Transfer your{' '}
+              <span className="text-primary">idea</span>{' '}
+              into{' '}
+              <span className="text-primary">comic</span>{' '}
+              <span className="text-accent">mind-maps</span>
             </h1>
             
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-text leading-relaxed mb-6">
