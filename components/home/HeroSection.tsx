@@ -48,20 +48,24 @@ export function HeroSection() {
             </div>
             
             {/* Features */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 sm:gap-8 mt-12 pt-8 border-t border-border/50">
-              <div className="flex items-center space-x-2 text-text-muted">
-                <span className="text-sm">✓</span>
-                <span className="text-sm">No login required</span>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-text-muted">
-                <span className="text-sm">✓</span>
-                <span className="text-sm">Free trial</span>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-text-muted">
-                <span className="text-sm">✓</span>
-                <span className="text-sm">Multiple art styles</span>
+            <div className="mt-12">
+              <div className="bg-neutral-card/30 border border-border/30 rounded-xl px-6 py-4 backdrop-blur-sm">
+                <div className="flex flex-wrap justify-center lg:justify-start gap-6 sm:gap-8">
+                  <div className="flex items-center space-x-2 text-text-muted">
+                    <span className="text-sm text-primary">✓</span>
+                    <span className="text-sm">No login required</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-text-muted">
+                    <span className="text-sm text-primary">✓</span>
+                    <span className="text-sm">Free trial</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-text-muted">
+                    <span className="text-sm text-primary">✓</span>
+                    <span className="text-sm">Multiple art styles</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
