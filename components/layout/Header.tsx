@@ -94,8 +94,7 @@ export function Header() {
           <div className="flex items-center h-20">
             
             {/* === 左侧：Logo和导航菜单组合区域 === */}
-            {/* 移除左侧多余空间，让Logo和文字直接贴靠容器左边 */}
-            <div className="flex items-center -ml-18">
+            <div className="flex items-center">
               {/* Logo区域 */}
               <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 {/* Logo图片 - 64x64px显示尺寸，减少右侧间距 */}
@@ -111,7 +110,7 @@ export function Header() {
               </Link>
 
               {/* 桌面端导航菜单 - 紧贴Logo右侧 */}
-              <nav className="hidden md:flex items-center space-x-8 ml-6">
+              <nav className="hidden md:flex items-center space-x-8 ml-8">
                 {/* 遍历导航配置数组，生成导航链接 */}
                 {navigation.map((item) => (
                   <Link

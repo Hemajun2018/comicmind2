@@ -20,19 +20,22 @@ const images = [
 
 export function GalleryGrid() {
   return (
-    <section className="py-20 bg-gradient-to-br from-neutral-bg to-neutral-card">
+    <section id="gallery" className="py-16 sm:py-20 bg-gradient-to-br from-neutral-bg to-neutral-card">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl font-semibold text-text mb-4">
             Mind maps that inspire
           </h2>
-          <p className="text-xl text-text-muted max-w-3xl mx-auto">
+          <h3 className="text-xl sm:text-2xl text-text mb-4">
+            激发灵感的思维导图
+          </h3>
+          <p className="text-lg sm:text-xl text-text-muted max-w-3xl mx-auto">
             See how others are using ComicMind to transform their ideas into engaging visual stories.
           </p>
         </div>
 
         {/* 响应式网格布局：移动端1列，平板2列，桌面端3列，大屏4列 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {images.map((img, index) => (
             <div
               key={index}
