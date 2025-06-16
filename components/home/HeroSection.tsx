@@ -10,12 +10,12 @@ export function HeroSection() {
           <div className="text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-text leading-tight mb-4">
               <div>
-                Transfer your{' '}
+                Transform your{' '}
                 <span className="text-primary">ideas</span>
               </div>
               <div>
                 into{' '}
-                <span className="text-primary">comic</span>{' '}
+                <span className="text-accent">comic</span>{' '}
                 <span className="text-accent">mind-maps</span>
               </div>
             </h1>
@@ -26,8 +26,7 @@ export function HeroSection() {
             
             <div className="space-y-3 mb-8">
               <p className="text-lg sm:text-xl text-text-muted leading-relaxed">
-                No login. Free try. Transform your ideas into beautiful, 
-                hand-drawn style mind maps with AI magic.
+               The world's first comic mind map generator.
               </p>
               <p className="text-base sm:text-lg text-text-muted leading-relaxed">
               </p>
@@ -38,7 +37,7 @@ export function HeroSection() {
                 href="/create"
                 className="bg-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft"
               >
-                Try it now 
+                Try for free 
               </Link>
               <Link
                 href="#gallery"
