@@ -48,47 +48,20 @@ export function HeroSection() {
             </div>
             
             {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12">
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20 hover:border-primary/40 transition-colors-smooth">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-text text-sm">No login required</div>
-                    <div className="text-xs text-text-muted">Start instantly</div>
-                  </div>
-                </div>
+            <div className="flex flex-wrap justify-center lg:justify-start gap-6 sm:gap-8 mt-12 pt-8 border-t border-border/50">
+              <div className="flex items-center space-x-2 text-text-muted">
+                <span className="text-sm">✓</span>
+                <span className="text-sm">No login required</span>
               </div>
               
-              <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-xl p-4 border border-accent/20 hover:border-accent/40 transition-colors-smooth">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-text text-sm">Free trial</div>
-                    <div className="text-xs text-text-muted">3 maps daily</div>
-                  </div>
-                </div>
+              <div className="flex items-center space-x-2 text-text-muted">
+                <span className="text-sm">✓</span>
+                <span className="text-sm">Free trial</span>
               </div>
               
-              <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-xl p-4 border border-secondary/20 hover:border-secondary/40 transition-colors-smooth">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-text text-sm">Multiple art styles</div>
-                    <div className="text-xs text-text-muted">5 unique styles</div>
-                  </div>
-                </div>
+              <div className="flex items-center space-x-2 text-text-muted">
+                <span className="text-sm">✓</span>
+                <span className="text-sm">Multiple art styles</span>
               </div>
             </div>
           </div>
