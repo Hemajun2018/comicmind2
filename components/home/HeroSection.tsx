@@ -8,36 +8,31 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left content */}
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-text leading-tight mb-4">
-              Bring your thoughts to life with{' '}
-              <span className="text-primary">comic</span>{' '}
-              <span className="text-accent">mind maps</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text leading-tight mb-6">
+              <div className="mb-2">
+                Transfer your{' '}
+                <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">idea</span>
+              </div>
+              <div className="mb-2">
+                into{' '}
+                <span className="text-accent font-extrabold">interesting</span>
+              </div>
+              <div className="text-transparent bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text font-extrabold">
+                comic mind-maps
+              </div>
             </h1>
             
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-text leading-relaxed mb-6">
-              World's first comic mind map generator
+        
             </h2>
             
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 mb-8">
               <p className="text-lg sm:text-xl text-text-muted leading-relaxed">
-                Transform your ideas into beautiful, hand-drawn style mind maps with AI magic.
+                No login. Free try. Transform your ideas into beautiful, 
+                hand-drawn style mind maps with AI magic.
               </p>
-              
-              {/* 特色标签 */}
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                <div className="flex items-center gap-2 bg-neutral-card px-4 py-2 rounded-full">
-                  <span className="text-lg">🚀</span>
-                  <span className="text-sm font-medium text-text">No Login Required</span>
-                </div>
-                <div className="flex items-center gap-2 bg-neutral-card px-4 py-2 rounded-full">
-                  <span className="text-lg">💯</span>
-                  <span className="text-sm font-medium text-text">100% Free</span>
-                </div>
-                <div className="flex items-center gap-2 bg-neutral-card px-4 py-2 rounded-full">
-                  <span className="text-lg">🤖</span>
-                  <span className="text-sm font-medium text-text">AI Powered</span>
-                </div>
-              </div>
+              <p className="text-base sm:text-lg text-text-muted leading-relaxed">
+              </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
