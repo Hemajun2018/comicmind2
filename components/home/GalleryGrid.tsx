@@ -33,8 +33,8 @@ export function GalleryGrid() {
           </p>
         </div>
 
-        {/* 响应式网格布局：移动端1列，平板2列，桌面端3列，大屏4列 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+        {/* 响应式网格布局：移动端2列，平板2列，桌面端3列，大屏4列 */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
           {images.map((img, index) => (
             <div
               key={index}
