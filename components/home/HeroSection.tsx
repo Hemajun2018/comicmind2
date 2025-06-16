@@ -16,7 +16,7 @@ export function HeroSection() {
             </h1>
             
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-text leading-relaxed mb-6">
-              在几秒钟内将文本转换为漫画思维导图
+        
             </h2>
             
             <div className="space-y-3 mb-8">
@@ -25,7 +25,6 @@ export function HeroSection() {
                 hand-drawn style mind maps with AI magic.
               </p>
               <p className="text-base sm:text-lg text-text-muted leading-relaxed">
-                无需登录，免费试用。用AI魔法将你的想法转化为精美的手绘风格思维导图。
               </p>
             </div>
             
@@ -34,13 +33,13 @@ export function HeroSection() {
                 href="/create"
                 className="bg-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft"
               >
-                Try it now 现在试试
+                Try it now 
               </Link>
               <Link
                 href="#gallery"
                 className="border-2 border-accent text-accent px-8 py-4 rounded-xl font-semibold text-lg hover:bg-accent hover:text-white transition-colors-smooth"
               >
-                View examples 查看示例
+                View examples 
               </Link>
             </div>
             
@@ -66,7 +65,7 @@ export function HeroSection() {
             <div className="relative w-full max-w-lg">
               <Image 
                 src="/hero-image1.png"
-                alt="ComicMind AI思维导图生成示例"
+                alt="ComicMind AI"
                 width={600}
                 height={450}
                 className="w-full h-auto rounded-xl shadow-soft"

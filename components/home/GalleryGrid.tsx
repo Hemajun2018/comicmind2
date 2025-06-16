@@ -27,7 +27,6 @@ export function GalleryGrid() {
             Mind maps that inspire
           </h2>
           <h3 className="text-xl sm:text-2xl text-text mb-4">
-            激发灵感的思维导图
           </h3>
           <p className="text-lg sm:text-xl text-text-muted max-w-3xl mx-auto">
             See how others are using ComicMind to transform their ideas into engaging visual stories.
