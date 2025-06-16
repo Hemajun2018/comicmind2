@@ -9,11 +9,15 @@ export function HeroSection() {
           {/* Left content */}
           <div className="text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-text leading-tight mb-4">
-              Transfer your{' '}
-              <span className="text-primary">idea</span>{' '}
-              into{' '}
-              <span className="text-primary">comic</span>{' '}
-              <span className="text-accent">mind-maps</span>
+              <div>
+                Transfer your{' '}
+                <span className="text-primary">ideas</span>
+              </div>
+              <div>
+                into{' '}
+                <span className="text-primary">comic</span>{' '}
+                <span className="text-accent">mind-maps</span>
+              </div>
             </h1>
             
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-text leading-relaxed mb-6">
