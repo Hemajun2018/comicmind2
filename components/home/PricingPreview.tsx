@@ -20,7 +20,7 @@ export function PricingPreview() {
     },
     {
       name: 'Pro',
-      price: '$12',
+      price: '$9.9',
       period: '/month',
       description: 'For serious mind mappers',
       features: [

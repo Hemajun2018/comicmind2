@@ -67,7 +67,7 @@ NEXTAUTH_SECRET=your_random_secret_key_here
          "description": "Unlimited AI mind map generation",
          "prices": [
            {
-             "amount": 1200,
+             "amount": 990,
              "currency": "usd",
              "interval": "month",
              "interval_count": 1

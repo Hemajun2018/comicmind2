@@ -133,7 +133,7 @@ export function PlansBillingCard({ subscription }: PlansBillingCardProps) {
                 ))}
             </ul>
             <p className="mt-6 text-center text-lg text-text">
-                Upgrade to Pro for just <span className="font-bold text-yellow-400">$12/month</span> and unlock unlimited creativity
+                Upgrade to Pro for just <span className="font-bold text-yellow-400">$9.9/month</span> and unlock unlimited creativity
             </p>
             <Button onClick={handleUpgrade} className="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-lg py-6" disabled={false}>
                 Coming Soon - Pro Version <Zap className="w-5 h-5 ml-2" />
