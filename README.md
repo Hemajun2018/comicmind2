@@ -96,19 +96,21 @@ npm run dev
 
 ## 📝 更新日志
 
-### 2024-12-XX - 首页英雄区标题优化
+### 2024-12-XX - 首页英雄区重新设计
 
 #### 🎨 UI/UX 改进
-- **标题文案更新**: 将主标题从 "Turn text into comic mind-maps in seconds" 改为 "Transfer your idea into comic mind-maps"
-- **简洁配色方案**: 采用经典双色设计
-  - "idea" 和 "comic" 使用主色调（蓝色系）
-  - "mind-maps" 使用辅助色（橙色系）
-- **保持简洁**: 移除过度装饰，回归简洁清爽的单行标题设计
+- **标题文案更新**: 改为 "Transform your ideas into comic mind-maps" 并采用两行布局
+- **特性卡片重设计**: 用现代卡片式设计替代传统统计数字
+  - **No login required**: 闪电图标 + 主色调渐变卡片
+  - **Free trial**: 美元符号图标 + 辅助色渐变卡片  
+  - **Multiple art styles**: 画板图标 + 次要色渐变卡片
+- **交互体验优化**: 悬停时边框颜色变化效果
 
 #### 🔧 技术实现
-- 简化 `HeroSection.tsx` 组件的标题结构
-- 使用原始双色配色方案，保持视觉一致性
-- 响应式字体大小和标准间距
+- 两行标题布局，增强视觉层次感
+- SVG 图标集成，提升视觉识别度
+- 渐变背景和边框设计，现代化UI风格
+- 响应式网格布局 (1列→3列)
 
 ### 2024-12-XX - Creem 付费系统集成与部署准备
 
