@@ -125,7 +125,7 @@ npm run dev
 4. **订阅管理**: Pro用户可通过客户门户管理订阅
 
 #### 🌐 部署配置
-- **Webhook URL**: `https://your-domain.vercel.app/api/webhooks/creem`
+- **Webhook URL**: `https://www.comicmind.art/api/webhooks/creem`
 - **环境变量**: 已配置正式环境API密钥
 - **数据库**: 支持订阅状态、续费、取消等完整生命周期
 
@@ -134,7 +134,7 @@ npm run dev
 在Creem控制台中需要确认以下设置：
 
 1. **Webhook 端点**: 
-   - URL: `https://your-domain.vercel.app/api/webhooks/creem`
+   - URL: `https://www.comicmind.art/api/webhooks/creem`
    - 事件: `checkout.session.completed`, `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.deleted`
 
 2. **产品配置**:
@@ -161,7 +161,7 @@ npm run dev
 
 #### 📋 部署准备
 - **配置文件**: 创建 `env.production.example` 部署参考
-- **Webhook URL**: 配置为 `https://your-domain.vercel.app/api/webhooks/creem`
+- **Webhook URL**: 配置为 `https://www.comicmind.art/api/webhooks/creem`
 - **支付流程**: 完整的用户升级和订阅管理流程
 - **监控日志**: 详细的webhook事件处理日志
 
