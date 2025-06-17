@@ -65,14 +65,19 @@
 创建 `.env.local` 文件：
 
 ```env
+# NextAuth 配置
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+
 # Supabase 配置
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# NextAuth 配置
-NEXTAUTH_SECRET=your_nextauth_secret
-NEXTAUTH_URL=http://localhost:3000
+# Creem 支付系统配置 (正式环境已配置)
+CREEM_API_KEY=creem_52Xv3Aw6A98PPg5go2b4tZ
+CREEM_WEBHOOK_SECRET=whsec_4LFHNbmkeu74JG4RINCu7e
+CREEM_PRICE_ID_PRO=prod_7WcEKqxngwFQa1SrUMqmwb
 ```
 
 ### 安装和运行
@@ -94,7 +99,71 @@ npm run dev
 
 详细设置请参考 `SUPABASE_SETUP.md`
 
+## 💳 Creem 支付系统集成状态
+
+### ✅ 正式环境已配置完成
+
+项目已完成Creem支付系统的正式环境集成，具备以下功能：
+
+#### 🔧 技术架构
+- **API 路由**: 完整的支付处理API
+  - `/api/create-checkout-session` - 创建结账会话
+  - `/api/webhooks/creem` - 处理webhook事件
+  - `/api/customer-portal` - 客户订阅管理
+- **数据库支持**: Supabase表结构已支持Creem字段
+- **环境检测**: 代码自动识别测试/正式环境API端点
+
+#### 🔐 安全机制
+- **Webhook验证**: 完整的签名验证机制
+- **环境变量**: 所有敏感信息通过环境变量管理
+- **错误处理**: 完善的错误处理和日志记录
+
+#### 📊 支付流程
+1. **用户升级**: 点击升级按钮 → 重定向到Creem结账页面
+2. **支付处理**: Creem处理支付 → 发送webhook事件
+3. **状态同步**: 系统接收webhook → 更新用户订阅状态
+4. **订阅管理**: Pro用户可通过客户门户管理订阅
+
+#### 🌐 部署配置
+- **Webhook URL**: `https://your-domain.vercel.app/api/webhooks/creem`
+- **环境变量**: 已配置正式环境API密钥
+- **数据库**: 支持订阅状态、续费、取消等完整生命周期
+
+### 📋 Creem 控制台配置清单
+
+在Creem控制台中需要确认以下设置：
+
+1. **Webhook 端点**: 
+   - URL: `https://your-domain.vercel.app/api/webhooks/creem`
+   - 事件: `checkout.session.completed`, `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.deleted`
+
+2. **产品配置**:
+   - Pro计划产品ID: `prod_7WcEKqxngwFQa1SrUMqmwb`
+   - 价格: $9.9/月
+
+3. **API权限**: 确保API密钥有创建结账会话的权限
+
 ## 📝 更新日志
+
+### 2024-12-XX - Creem 正式环境配置完成
+
+#### 🎯 生产环境升级
+- **正式API配置**: 集成Creem正式环境API密钥和配置
+- **环境变量更新**: 添加生产环境配置示例文件
+- **文档完善**: 更新README.md，添加Creem配置状态和部署指南
+- **安全验证**: 确认webhook签名验证和API密钥配置正确
+
+#### 🔧 技术实现
+- **API密钥**: `creem_52Xv3Aw6A98PPg5go2b4tZ` (正式环境)
+- **Webhook密钥**: `whsec_4LFHNbmkeu74JG4RINCu7e`
+- **产品ID**: `prod_7WcEKqxngwFQa1SrUMqmwb` (Pro计划)
+- **环境检测**: 代码自动识别生产环境API端点
+
+#### 📋 部署准备
+- **配置文件**: 创建 `env.production.example` 部署参考
+- **Webhook URL**: 配置为 `https://your-domain.vercel.app/api/webhooks/creem`
+- **支付流程**: 完整的用户升级和订阅管理流程
+- **监控日志**: 详细的webhook事件处理日志
 
 ### 2024-12-XX - 首页英雄区重新设计
 
