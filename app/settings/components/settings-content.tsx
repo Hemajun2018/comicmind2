@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
 import { UserProfileCard } from './user-profile-card';
 import { PlansBillingCard } from './plans-billing-card';
 import { PaymentStatus } from './payment-status';
+import ErrorBoundary from './error-boundary';
 import type { Database } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -19,17 +19,21 @@ export function SettingsContent({ user, subscription }: SettingsContentProps) {
     <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold mb-6 text-text">Settings</h1>
       
-      {/* 支付状态消息 */}
-      <Suspense fallback={null}>
+      {/* 支付状态消息 - 移除 Suspense 包装 */}
+      <ErrorBoundary>
         <PaymentStatus />
-      </Suspense>
+      </ErrorBoundary>
       
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
         <div className="lg:col-span-2">
-          <UserProfileCard user={user} />
+          <ErrorBoundary>
+            <UserProfileCard user={user} />
+          </ErrorBoundary>
         </div>
         <div className="lg:col-span-3">
-          <PlansBillingCard subscription={subscription} />
+          <ErrorBoundary>
+            <PlansBillingCard subscription={subscription} />
+          </ErrorBoundary>
         </div>
       </div>
     </div>

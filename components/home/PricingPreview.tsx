@@ -90,12 +90,20 @@ export function PricingPreview() {
                 ))}
               </ul>
 
-              <Link
-                href="/pricing"
-                className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle}`}
-              >
-                {plan.buttonText}
-              </Link>
+              {plan.name === 'Pro' ? (
+                <Link
+                  href="/settings"
+                  className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle}`}
+                >
+                  {plan.buttonText}
+                </Link>
+              ) : (
+                <button
+                  className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle}`}
+                >
+                  {plan.buttonText}
+                </button>
+              )}
             </div>
           ))}
         </div>
