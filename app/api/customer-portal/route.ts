@@ -20,43 +20,22 @@ export async function POST(request: Request) {
       .single();
 
     if (subError || !subscription?.creem_customer_id) {
-      return NextResponse.json({ 
-        error: 'No active subscription found' 
+      return NextResponse.json({
+        error: 'No active subscription found or customer ID is missing.'
       }, { status: 404 });
     }
 
-    // 创建Creem客户门户会话
-    // 注意：这里的API调用需要根据Creem的实际文档进行调整
-    const creemResponse = await fetch('https://api.creem.com/v1/billing_portal/sessions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.CREEM_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        customer: subscription.creem_customer_id,
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings`,
-      }),
+    // 直接构建Creem客户门户URL，无需API调用
+    const portalUrl = `https://app.creem.io/self-serve/${subscription.creem_customer_id}`;
+
+    return NextResponse.json({
+      url: portalUrl
     });
 
-    if (!creemResponse.ok) {
-      const error = await creemResponse.json();
-      console.error('Creem portal API error:', error);
-      return NextResponse.json({ 
-        error: 'Failed to create portal session' 
-      }, { status: 500 });
-    }
-
-    const portalSession = await creemResponse.json();
-    
-    return NextResponse.json({ 
-      url: portalSession.url 
-    });
-
-  } catch (error) {
-    console.error('Customer portal creation error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+  } catch (error: any) {
+    console.error('Customer portal URL creation error:', error);
+    return NextResponse.json({
+      error: error.message || 'Internal server error'
     }, { status: 500 });
   }
 } 

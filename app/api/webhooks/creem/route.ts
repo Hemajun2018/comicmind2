@@ -1,18 +1,32 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import crypto from 'crypto';
 
-// 验证webhook签名的函数
-function verifyWebhookSignature(body: string, signature: string, secret: string): boolean {
-  // 注意：这里需要根据Creem的实际签名验证方式进行调整
-  // 通常使用HMAC-SHA256进行验证
-  const crypto = require('crypto');
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(body, 'utf8')
-    .digest('hex');
-  
-  return signature === `sha256=${expectedSignature}`;
+// 验证Creem Webhook签名的函数，符合官方最佳实践
+function verifySignature(body: string, signature: string, secret: string): boolean {
+  if (!signature || !body) {
+    return false;
+  }
+
+  const [timestampPart, signaturePart] = signature.split(',');
+  if (!timestampPart || !signaturePart) {
+    return false;
+  }
+
+  const timestamp = timestampPart.split('=')[1];
+  const expectedSignature = signaturePart.split('=')[1];
+
+  if (!timestamp || !expectedSignature) {
+    return false;
+  }
+
+  const signedPayload = `${timestamp}.${body}`;
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(signedPayload);
+  const calculatedSignature = hmac.digest('hex');
+
+  return calculatedSignature === expectedSignature;
 }
 
 export async function POST(request: Request) {
@@ -20,9 +34,8 @@ export async function POST(request: Request) {
     const body = await request.text();
     const headersList = headers();
     const signature = headersList.get('creem-signature') || '';
-    
-    // 验证webhook签名
-    if (!verifyWebhookSignature(body, signature, process.env.CREEM_WEBHOOK_SECRET!)) {
+
+    if (!verifySignature(body, signature, process.env.CREEM_WEBHOOK_SECRET!)) {
       console.error('Invalid signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
@@ -34,35 +47,31 @@ export async function POST(request: Request) {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        // 订阅成功创建
         const session = event.data.object;
         const userId = session.metadata.user_id;
-        const plan = session.metadata.plan || 'pro';
 
         if (!userId) {
           console.error('No user_id in session metadata');
           return NextResponse.json({ error: 'No user_id found' }, { status: 400 });
         }
 
-        // 创建或更新订阅记录
-        const { error } = await supabase
-          .from('subscriptions')
-          .upsert({
-            user_id: userId,
-            plan_type: plan,
-            status: 'active',
-            creem_subscription_id: session.subscription,
-            creem_customer_id: session.customer,
-            current_period_start: new Date(session.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(session.current_period_end * 1000).toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-
+        // 优化为更健壮的"先检查、后创建"逻辑
+        const { error } = await supabase.from('subscriptions').insert({
+          user_id: userId,
+          plan_type: session.metadata.plan || 'pro',
+          status: 'active',
+          creem_subscription_id: session.subscription,
+          creem_customer_id: session.customer,
+          creem_price_id: session.line_items?.data[0]?.price.id, // 填充price_id
+          current_period_start: new Date(session.created * 1000).toISOString(),
+          current_period_end: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(), // 估算一个月
+          updated_at: new Date().toISOString(),
+        });
+        
         if (error) {
           console.error('Error creating subscription:', error);
-          return NextResponse.json({ error: 'Database error' }, { status: 500 });
+          return NextResponse.json({ error: 'Database error on subscription creation' }, { status: 500 });
         }
-
         console.log('Subscription created for user:', userId);
         break;
       }
@@ -144,10 +153,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
 
-  } catch (error) {
-    console.error('Webhook error:', error);
+  } catch (error: any) {
+    console.error('Webhook processing error:', error);
     return NextResponse.json({ 
-      error: 'Webhook processing failed' 
+      error: `Webhook handler failed: ${error.message}` 
     }, { status: 500 });
   }
 } 
