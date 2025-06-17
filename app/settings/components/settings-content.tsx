@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { UserProfileCard } from './user-profile-card';
 import { PlansBillingCard } from './plans-billing-card';
 import { PaymentStatus } from './payment-status';
@@ -19,9 +20,11 @@ export function SettingsContent({ user, subscription }: SettingsContentProps) {
     <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold mb-6 text-text">Settings</h1>
       
-      {/* 支付状态消息 - 移除 Suspense 包装 */}
+      {/* 支付状态消息 - 用错误边界保护 */}
       <ErrorBoundary>
-        <PaymentStatus />
+        <Suspense fallback={null}>
+          <PaymentStatus />
+        </Suspense>
       </ErrorBoundary>
       
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">

@@ -28,19 +28,17 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // 检测是否为测试模式
+    // 根据API Key判断使用测试环境还是生产环境的端点
     const apiKey = process.env.CREEM_API_KEY!;
     const isTestMode = apiKey.startsWith('creem_test_');
-    
-    // 根据测试/生产模式选择API端点
-    const baseUrl = isTestMode 
-      ? 'https://test-api.creem.io' 
-      : 'https://api.creem.io';
-    
-    console.log(`Using Creem API endpoint: ${baseUrl}/v1/checkouts (Test Mode: ${isTestMode})`);
+    const apiEndpoint = isTestMode 
+      ? 'https://test-api.creem.io/v1/checkouts'
+      : 'https://api.creem.io/v1/checkouts';
 
-    // 调用Creem API创建结账会话
-    const response = await fetch(`${baseUrl}/v1/checkouts`, {
+    console.log(`Using Creem API endpoint: ${apiEndpoint} (Test Mode: ${isTestMode})`);
+
+    // 创建Creem结账会话 - 使用正确的测试/生产环境端点
+    const creemResponse = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
@@ -51,8 +49,7 @@ export async function POST(request: Request) {
         customer: {
           email: user.email,
         },
-        success_url: `${process.env.NEXTAUTH_URL}/settings/success`,
-        cancel_url: `${process.env.NEXTAUTH_URL}/settings?canceled=true`,
+        success_url: `${process.env.NEXTAUTH_URL}/settings?success=true`,
         metadata: {
           user_id: user.id,
           plan: plan,
@@ -60,25 +57,25 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Creem API error:', errorData);
+    if (!creemResponse.ok) {
+      const errorText = await creemResponse.text();
+      console.error(`Creem API error: ${creemResponse.status}`, errorText);
       return NextResponse.json({ 
-        error: `Failed to create checkout session. Creem API responded with: ${errorData}` 
-      }, { status: response.status });
+        error: `Failed to create checkout session. Creem API responded with: ${errorText}` 
+      }, { status: 500 });
     }
 
-    const data = await response.json();
-
-    // 返回checkout URL，根据Creem API文档，返回字段可能是 checkout_url 或 url
+    const session = await creemResponse.json();
+    
+    // Creem API 返回的checkout URL字段名是 checkout_url
     return NextResponse.json({ 
-      url: data.checkout_url || data.url 
+      url: session.checkout_url 
     });
 
   } catch (error: any) {
     console.error('Checkout session creation error:', error);
     return NextResponse.json({ 
-      error: `Failed to create checkout session: ${error.message}` 
+      error: error.message || 'Internal server error' 
     }, { status: 500 });
   }
 } 
