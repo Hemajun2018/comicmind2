@@ -17,9 +17,9 @@ export async function POST(request: Request) {
     // 检查用户是否已经有活跃订阅
     const { data: existingSubscription } = await supabase
       .from('subscriptions')
-      .select('*')
+      .select('id')
       .eq('user_id', user.id)
-      .eq('status', 'active')
+      .in('status', ['active', 'trialing'])
       .single();
 
     if (existingSubscription) {
@@ -30,23 +30,17 @@ export async function POST(request: Request) {
 
     // 创建Creem结账会话
     // 注意：这里的API调用需要根据Creem的实际文档进行调整
-    const creemResponse = await fetch('https://api.creem.com/v1/checkout/sessions', {
+    const creemResponse = await fetch('https://api.creem.io/v1/checkouts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.CREEM_API_KEY}`,
+        'x-api-key': process.env.CREEM_API_KEY!,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        product_id: process.env.CREEM_PRICE_ID_PRO!,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?success=true`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?canceled=true`,
         customer_email: user.email,
-        mode: 'subscription',
-        line_items: [
-          {
-            price: process.env.CREEM_PRICE_ID_PRO, // 在环境变量中配置价格ID
-            quantity: 1,
-          },
-        ],
         metadata: {
           user_id: user.id,
           plan: plan,
@@ -55,10 +49,10 @@ export async function POST(request: Request) {
     });
 
     if (!creemResponse.ok) {
-      const error = await creemResponse.json();
-      console.error('Creem API error:', error);
+      const errorText = await creemResponse.text();
+      console.error(`Creem API error: ${creemResponse.status}`, errorText);
       return NextResponse.json({ 
-        error: 'Failed to create checkout session' 
+        error: `Failed to create checkout session. Creem API responded with: ${errorText}` 
       }, { status: 500 });
     }
 
@@ -68,10 +62,10 @@ export async function POST(request: Request) {
       url: session.url 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Checkout session creation error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error' 
+      error: error.message || 'Internal server error' 
     }, { status: 500 });
   }
 } 
