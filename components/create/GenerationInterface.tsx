@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle } from 'lucide-react';
+import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle, Clock, Brain, Zap, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -14,6 +14,26 @@ interface GenerationState {
   hasStructure: boolean;
   hasImage: boolean;
   error: string | null;
+}
+
+// 新增：进度步骤定义
+interface ProgressStep {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  estimatedTime: number; // 秒
+  isActive: boolean;
+  isCompleted: boolean;
+}
+
+// 新增：进度状态
+interface ProgressState {
+  currentStepIndex: number;
+  currentStepProgress: number; // 0-100
+  timeElapsed: number;
+  timeRemaining: number;
+  totalEstimatedTime: number;
 }
 
 export function GenerationInterface() {
@@ -42,6 +62,170 @@ export function GenerationInterface() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   
   const [showStructureModal, setShowStructureModal] = useState(false);
+
+  // 新增：进度状态管理
+  const [progressState, setProgressState] = useState<ProgressState>({
+    currentStepIndex: 0,
+    currentStepProgress: 0,
+    timeElapsed: 0,
+    timeRemaining: 0,
+    totalEstimatedTime: 0,
+  });
+
+  // 新增：进度步骤定义
+  const structureSteps: ProgressStep[] = [
+    {
+      id: 'analyze',
+      title: '文本分析中',
+      description: 'AI正在深度理解您的内容...',
+      icon: Brain,
+      estimatedTime: 8,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'extract',
+      title: '关键信息提取',
+      description: '识别核心概念和关键要点...',
+      icon: Zap,
+      estimatedTime: 12,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'structure',
+      title: '思维导图构建',
+      description: '构建层次化的思维导图结构...',
+      icon: Edit,
+      estimatedTime: 15,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'optimize',
+      title: '结构优化',
+      description: '优化布局和逻辑关系...',
+      icon: Check,
+      estimatedTime: 10,
+      isActive: false,
+      isCompleted: false,
+    },
+  ];
+
+  const imageSteps: ProgressStep[] = [
+    {
+      id: 'config',
+      title: '图像配置',
+      description: '设置风格参数和画面比例...',
+      icon: Palette,
+      estimatedTime: 8,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'render',
+      title: 'AI渲染生成',
+      description: '智能绘制思维导图图像...',
+      icon: Sparkles,
+      estimatedTime: 65,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'enhance',
+      title: '图像增强',
+      description: '优化图像质量和细节...',
+      icon: RefreshCw,
+      estimatedTime: 12,
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      id: 'finalize',
+      title: '完成生成',
+      description: '最终处理和质量检查...',
+      icon: Check,
+      estimatedTime: 8,
+      isActive: false,
+      isCompleted: false,
+    },
+  ];
+
+  // 新增：获取当前步骤列表
+  const getCurrentSteps = () => {
+    if (generationState.isGeneratingStructure) return structureSteps;
+    if (generationState.isGeneratingImage) return imageSteps;
+    return [];
+  };
+
+  // 新增：进度管理函数
+  const startProgress = (steps: ProgressStep[]) => {
+    const totalTime = steps.reduce((sum, step) => sum + step.estimatedTime, 0);
+    setProgressState({
+      currentStepIndex: 0,
+      currentStepProgress: 0,
+      timeElapsed: 0,
+      timeRemaining: totalTime,
+      totalEstimatedTime: totalTime,
+    });
+  };
+
+  const updateProgress = (steps: ProgressStep[]) => {
+    setProgressState(prev => {
+      const newTimeElapsed = prev.timeElapsed + 1;
+      const currentStep = steps[prev.currentStepIndex];
+      
+      if (!currentStep) return prev;
+
+      // 计算当前步骤的进度
+      let currentStepProgress = prev.currentStepProgress + (100 / currentStep.estimatedTime);
+      let newStepIndex = prev.currentStepIndex;
+
+      // 如果当前步骤完成，移动到下一步
+      if (currentStepProgress >= 100 && newStepIndex < steps.length - 1) {
+        newStepIndex++;
+        currentStepProgress = 0;
+      } else if (currentStepProgress >= 100) {
+        currentStepProgress = 100;
+      }
+
+      const timeRemaining = Math.max(0, prev.totalEstimatedTime - newTimeElapsed);
+
+      return {
+        ...prev,
+        currentStepIndex: newStepIndex,
+        currentStepProgress: Math.min(100, currentStepProgress),
+        timeElapsed: newTimeElapsed,
+        timeRemaining,
+      };
+    });
+  };
+
+  // 新增：进度定时器
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (generationState.isGeneratingStructure || generationState.isGeneratingImage) {
+      const steps = getCurrentSteps();
+      interval = setInterval(() => {
+        updateProgress(steps);
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [generationState.isGeneratingStructure, generationState.isGeneratingImage]);
+
+  // 新增：格式化时间显示
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}分${secs}秒`;
+    }
+    return `${secs}秒`;
+  };
 
   // 检查用户限制
   useEffect(() => {
@@ -146,6 +330,9 @@ export function GenerationInterface() {
       error: null,
     });
 
+    // 新增：初始化进度
+    startProgress(structureSteps);
+
     try {
       const response = await fetch('/api/generate-structure', {
         method: 'POST',
@@ -225,6 +412,9 @@ export function GenerationInterface() {
       hasImage: false,
       error: null,
     });
+
+    // 新增：初始化进度
+    startProgress(imageSteps);
 
     try {
       const response = await fetch('/api/generate-image', {
@@ -482,7 +672,7 @@ export function GenerationInterface() {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>Generate Mind Map Structure</span>
+                      <span>Generate</span>
                     </>
                   )}
                 </button>
@@ -548,34 +738,196 @@ export function GenerationInterface() {
               <div className="relative">
                 <div className={`${selectedAspectRatio?.dimensions} bg-neutral-bg border-2 border-dashed border-border rounded-xl overflow-hidden relative`}>
                   
-                  {/* Loading Overlay - Structure Generation */}
+                  {/* 新增：智能进度展示 - 结构生成 */}
                   {generationState.isGeneratingStructure && (
-                    <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
-                      <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">Generating mind map structure...</div>
-                        <div className="text-text-muted">AI is analyzing your content and creating structured outline</div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
-                          <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '40%' }}></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-neutral-card/95 to-neutral-card/90 flex items-center justify-center z-10 backdrop-blur-sm">
+                      <div className="text-center max-w-md w-full px-6">
+                        {/* 主标题和时间信息 */}
+                        <div className="mb-6">
+                          <div className="flex items-center justify-center space-x-2 mb-2">
+                            <Brain className="w-6 h-6 text-primary animate-pulse" />
+                            <h3 className="text-xl font-bold text-text">AI思维导图生成中</h3>
+                          </div>
+                          <div className="flex items-center justify-center space-x-4 text-sm text-text-muted">
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>已耗时 {formatTime(progressState.timeElapsed)}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>预计剩余 {formatTime(progressState.timeRemaining)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 步骤列表 */}
+                        <div className="space-y-3 mb-6">
+                          {structureSteps.map((step, index) => {
+                            const isActive = index === progressState.currentStepIndex;
+                            const isCompleted = index < progressState.currentStepIndex || 
+                              (index === progressState.currentStepIndex && progressState.currentStepProgress === 100);
+                            const IconComponent = step.icon;
+                            
+                            return (
+                              <div
+                                key={step.id}
+                                className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-300 ${
+                                  isActive 
+                                    ? 'bg-primary/10 border border-primary/20 shadow-md scale-105' 
+                                    : isCompleted 
+                                      ? 'bg-accent/10 border border-accent/20' 
+                                      : 'bg-neutral-bg/50 border border-border/50'
+                                }`}
+                              >
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                                  isCompleted 
+                                    ? 'bg-accent text-white' 
+                                    : isActive 
+                                      ? 'bg-primary text-white' 
+                                      : 'bg-border text-text-muted'
+                                }`}>
+                                  {isCompleted ? (
+                                    <Check className="w-4 h-4" />
+                                  ) : (
+                                    <IconComponent className={`w-4 h-4 ${isActive ? 'animate-pulse' : ''}`} />
+                                  )}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <div className={`font-medium ${
+                                    isActive ? 'text-primary' : isCompleted ? 'text-accent' : 'text-text-muted'
+                                  }`}>
+                                    {step.title}
+                                  </div>
+                                  <div className="text-sm text-text-muted">
+                                    {step.description}
+                                  </div>
+                                </div>
+                                {isActive && (
+                                  <div className="text-sm font-medium text-primary">
+                                    {Math.round(progressState.currentStepProgress)}%
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* 总体进度条 */}
+                        <div className="w-full bg-border rounded-full h-3 mb-2 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500 ease-out relative"
+                            style={{ 
+                              width: `${(progressState.currentStepIndex * 100 + progressState.currentStepProgress) / structureSteps.length}%` 
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-text-muted">
+                          整体进度: {Math.round((progressState.currentStepIndex * 100 + progressState.currentStepProgress) / structureSteps.length)}%
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Loading Overlay - Image Generation */}
+                  {/* 新增：智能进度展示 - 图像生成 */}
                   {generationState.isGeneratingImage && (
-                    <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
-                      <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">Generating mind map image...</div>
-                        <div className="text-text-muted">AI is converting structure into comic-style mind map</div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
-                          <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '80%' }}></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-neutral-card/95 to-neutral-card/90 flex items-center justify-center z-10 backdrop-blur-sm">
+                      <div className="text-center max-w-md w-full px-6">
+                        {/* 主标题和时间信息 */}
+                        <div className="mb-6">
+                          <div className="flex items-center justify-center space-x-2 mb-2">
+                            <Sparkles className="w-6 h-6 text-accent animate-pulse" />
+                            <h3 className="text-xl font-bold text-text">AI图像渲染中</h3>
+                          </div>
+                          <div className="flex items-center justify-center space-x-4 text-sm text-text-muted">
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>已耗时 {formatTime(progressState.timeElapsed)}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>预计剩余 {formatTime(progressState.timeRemaining)}</span>
+                            </div>
+                          </div>
                         </div>
+
+                        {/* 步骤列表 */}
+                        <div className="space-y-3 mb-6">
+                          {imageSteps.map((step, index) => {
+                            const isActive = index === progressState.currentStepIndex;
+                            const isCompleted = index < progressState.currentStepIndex || 
+                              (index === progressState.currentStepIndex && progressState.currentStepProgress === 100);
+                            const IconComponent = step.icon;
+                            
+                            return (
+                              <div
+                                key={step.id}
+                                className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-300 ${
+                                  isActive 
+                                    ? 'bg-accent/10 border border-accent/20 shadow-md scale-105' 
+                                    : isCompleted 
+                                      ? 'bg-primary/10 border border-primary/20' 
+                                      : 'bg-neutral-bg/50 border border-border/50'
+                                }`}
+                              >
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                                  isCompleted 
+                                    ? 'bg-primary text-white' 
+                                    : isActive 
+                                      ? 'bg-accent text-white' 
+                                      : 'bg-border text-text-muted'
+                                }`}>
+                                  {isCompleted ? (
+                                    <Check className="w-4 h-4" />
+                                  ) : (
+                                    <IconComponent className={`w-4 h-4 ${isActive ? 'animate-pulse' : ''}`} />
+                                  )}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <div className={`font-medium ${
+                                    isActive ? 'text-accent' : isCompleted ? 'text-primary' : 'text-text-muted'
+                                  }`}>
+                                    {step.title}
+                                  </div>
+                                  <div className="text-sm text-text-muted">
+                                    {step.description}
+                                  </div>
+                                </div>
+                                {isActive && (
+                                  <div className="text-sm font-medium text-accent">
+                                    {Math.round(progressState.currentStepProgress)}%
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* 总体进度条 */}
+                        <div className="w-full bg-border rounded-full h-3 mb-2 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-accent to-accent/80 h-3 rounded-full transition-all duration-500 ease-out relative"
+                            style={{ 
+                              width: `${(progressState.currentStepIndex * 100 + progressState.currentStepProgress) / imageSteps.length}%` 
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-text-muted">
+                          图像生成进度: {Math.round((progressState.currentStepIndex * 100 + progressState.currentStepProgress) / imageSteps.length)}%
+                        </div>
+
+                        {/* 特殊提示：图像生成阶段 */}
+                        {progressState.currentStepIndex === 1 && (
+                          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-center space-x-2 text-yellow-800">
+                              <Sparkles className="w-4 h-4" />
+                              <span className="text-sm font-medium">AI正在精心绘制您的思维导图，请耐心等待...</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
