@@ -1,22 +1,30 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle, History } from 'lucide-react';
+import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { checkDailyLimit, getUserSubscription } from '@/lib/supabase/utils';
-import { createClient } from '@/lib/supabase/client';
+import { checkDailyLimit } from '@/lib/supabase/utils';
 
-interface GeneratedImage {
+interface GenerationState {
+  step: 'input' | 'structure' | 'image';
+  isGeneratingStructure: boolean;
+  isGeneratingImage: boolean;
+  hasStructure: boolean;
+  hasImage: boolean;
+  error: string | null;
+}
+
+// 生成记录接口
+interface GenerationRecord {
   id: string;
-  prompt: string;
-  style: string;
-  aspect_ratio: string;
+  inputText: string;
+  imageUrl: string;
   language: string;
-  image_url: string;
-  structure_content: string;
-  created_at: string;
+  style: string;
+  aspectRatio: string;
+  createdAt: Date;
 }
 
 export function GenerationInterface() {
@@ -26,34 +34,146 @@ export function GenerationInterface() {
   const [style, setStyle] = useState('kawaii');
   const [aspectRatio, setAspectRatio] = useState('4:3');
   
-  // 生成状态
-  const [isGeneratingStructure, setIsGeneratingStructure] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [generatedStructure, setGeneratedStructure] = useState('');
-  const [currentImageUrl, setCurrentImageUrl] = useState('');
-  
-  // 历史记录
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  
-  // 用户状态
+  // 限制状态管理
   const [hasQuota, setHasQuota] = useState(true);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [quotaLoading, setQuotaLoading] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+
+  const [generationState, setGenerationState] = useState<GenerationState>({
+    step: 'input',
+    isGeneratingStructure: false,
+    isGeneratingImage: false,
+    hasStructure: false,
+    hasImage: false,
+    error: null,
+  });
+
+  const [generatedStructure, setGeneratedStructure] = useState('');
+  const [editableStructure, setEditableStructure] = useState('');
+  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  
+  const [showStructureModal, setShowStructureModal] = useState(false);
+
+  // 生成记录管理
+  const [generationRecords, setGenerationRecords] = useState<GenerationRecord[]>([]);
+
+  // 检查用户限制
+  useEffect(() => {
+    const checkUserQuota = async () => {
+      setQuotaLoading(true);
+      try {
+        // 模拟获取客户端IP（实际应用中需要从服务端获取）
+        const mockIP = '127.0.0.1';
+        const quota = await checkDailyLimit(user?.id, mockIP);
+        setHasQuota(quota);
+      } catch (error) {
+        console.error('检查限制失败:', error);
+        // 如果检查失败，默认允许使用
+        setHasQuota(true);
+      } finally {
+        setQuotaLoading(false);
+      }
+    };
+
+    checkUserQuota();
+    
+    // 加载历史记录（从localStorage暂存，后续可以改为从数据库获取）
+    loadGenerationRecords();
+  }, [user]);
+
+  // 加载生成记录
+  const loadGenerationRecords = () => {
+    try {
+      const savedRecords = localStorage.getItem('generationRecords');
+      if (savedRecords) {
+        const records = JSON.parse(savedRecords).map((record: any) => ({
+          ...record,
+          createdAt: new Date(record.createdAt)
+        }));
+        setGenerationRecords(records.reverse()); // 最新的显示在前面
+      }
+    } catch (error) {
+      console.error('加载生成记录失败:', error);
+    }
+  };
+
+  // 保存生成记录
+  const saveGenerationRecord = (record: GenerationRecord) => {
+    try {
+      const updatedRecords = [record, ...generationRecords];
+      setGenerationRecords(updatedRecords);
+      localStorage.setItem('generationRecords', JSON.stringify(updatedRecords));
+    } catch (error) {
+      console.error('保存生成记录失败:', error);
+    }
+  };
+
+  // 删除生成记录
+  const deleteGenerationRecord = (recordId: string) => {
+    try {
+      const updatedRecords = generationRecords.filter(record => record.id !== recordId);
+      setGenerationRecords(updatedRecords);
+      localStorage.setItem('generationRecords', JSON.stringify(updatedRecords));
+      toast.success('记录已删除');
+    } catch (error) {
+      console.error('删除生成记录失败:', error);
+      toast.error('删除记录失败');
+    }
+  };
+
+  // 重新检查配额的函数
+  const recheckQuota = async () => {
+    try {
+      // 模拟获取客户端IP（实际应用中需要从服务端获取）
+      const mockIP = '127.0.0.1';
+      const quota = await checkDailyLimit(user?.id, mockIP);
+      setHasQuota(quota);
+    } catch (error) {
+      console.error('重新检查配额失败:', error);
+      // 检查失败时默认有配额，避免影响用户体验
+      setHasQuota(true);
+    }
+  };
 
   const aspectRatioOptions = [
-    { value: '1:1', label: '1:1 (Square)' },
-    { value: '3:4', label: '3:4 (Portrait)' },
-    { value: '9:16', label: '9:16 (Vertical)' },
-    { value: '4:3', label: '4:3 (Landscape)' },
-    { value: '16:9', label: '16:9 (Wide)' },
+    { 
+      value: '1:1', 
+      ratio: '1:1',
+      dimensions: 'w-full aspect-square',
+      shapeClass: 'w-7 h-7'
+    },
+    { 
+      value: '3:4', 
+      ratio: '3:4',
+      dimensions: 'w-full aspect-[3/4]',
+      shapeClass: 'w-6 h-8'
+    },
+    { 
+      value: '9:16', 
+      ratio: '9:16',
+      dimensions: 'w-full aspect-[9/16]',
+      shapeClass: 'w-4 h-8'
+    },
+    { 
+      value: '4:3', 
+      ratio: '4:3',
+      dimensions: 'w-full aspect-[4/3]',
+      shapeClass: 'w-9 h-7'
+    },
+    { 
+      value: '16:9', 
+      ratio: '16:9',
+      dimensions: 'w-full aspect-video',
+      shapeClass: 'w-10 h-6'
+    },
   ];
 
   const styleOptions = [
-    { value: 'kawaii', label: 'Kawaii Flat Cartoon' },
-    { value: 'flat', label: 'Flat Minimalist' },
-    { value: 'watercolor', label: 'Watercolor Artistic' },
-    { value: 'chalkboard', label: 'Chalkboard Style' },
-    { value: '3d', label: '3D Rendered' }
+    { value: 'kawaii', label: 'Kawaii Flat Cartoon Style', description: 'Cute flat cartoon with bright colors' },
+    { value: 'flat', label: 'Flat Minimalist Style', description: 'Clean and simple flat design' },
+    { value: 'watercolor', label: 'Watercolor Artistic', description: 'Soft watercolor painting style' },
+    { value: 'chalkboard', label: 'Chalkboard Style', description: 'Chalk on blackboard style' },
+    { value: '3d', label: '3D', description: 'Three-dimensional rendered style' }
   ];
 
   const languageOptions = [
@@ -67,62 +187,21 @@ export function GenerationInterface() {
     { value: 'portuguese', label: 'Português (Portuguese)' },
   ];
 
-  // 检查用户订阅状态和配额
-  useEffect(() => {
-    const checkUserStatus = async () => {
-      if (!user) return;
-      
-      try {
-        // 检查订阅状态
-        const subscription = await getUserSubscription(user.id);
-        setIsSubscribed(subscription?.status === 'active');
-        
-        // 检查每日配额
-        const mockIP = '127.0.0.1';
-        const quota = await checkDailyLimit(user.id, mockIP);
-        setHasQuota(quota);
-      } catch (error) {
-        console.error('检查用户状态失败:', error);
-      }
-    };
-
-    checkUserStatus();
-  }, [user]);
-
-  // 加载历史记录（只有登录且付费用户才显示）
-  useEffect(() => {
-    const loadHistory = async () => {
-      if (!user || !isSubscribed) return;
-      
-      setIsLoadingHistory(true);
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('generated_images')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-        setGeneratedImages(data || []);
-      } catch (error) {
-        console.error('加载历史记录失败:', error);
-      } finally {
-        setIsLoadingHistory(false);
-      }
-    };
-
-    loadHistory();
-  }, [user, isSubscribed]);
-
-  // 生成思维导图结构
+  // 第一阶段：生成思维导图结构
   const handleGenerateStructure = async () => {
     if (!input.trim()) {
-      toast.error('请输入内容来生成思维导图');
+      toast.error('Please enter content to generate mind map');
       return;
     }
 
-    setIsGeneratingStructure(true);
+    setGenerationState({
+      step: 'structure',
+      isGeneratingStructure: true,
+      isGeneratingImage: false,
+      hasStructure: false,
+      hasImage: false,
+      error: null,
+    });
 
     try {
       const response = await fetch('/api/generate-structure', {
@@ -139,36 +218,69 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
+        // 检查是否是限制达到的错误
         if (data.code === 'DAILY_LIMIT_REACHED') {
           setHasQuota(false);
+          setShowUpgradePrompt(true);
           toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
+          setGenerationState({
+            step: 'input',
+            isGeneratingStructure: false,
+            isGeneratingImage: false,
+            hasStructure: false,
+            hasImage: false,
+            error: null,
+          });
           return;
         }
-        throw new Error(data.error || '结构生成失败');
+        throw new Error(data.error || 'Structure generation failed');
       }
 
       setGeneratedStructure(data.structure);
-      toast.success('思维导图结构生成成功！');
+      setEditableStructure(data.structure);
+      setGenerationState({
+        step: 'structure',
+        isGeneratingStructure: false,
+        isGeneratingImage: false,
+        hasStructure: true,
+        hasImage: false,
+        error: null,
+      });
+
+      setShowStructureModal(true);
+      toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
       
-      // 自动开始生成图片
-      await handleGenerateImage(data.structure);
+      // 生成成功后重新检查限制状态
+      await recheckQuota();
     } catch (error) {
-      console.error('结构生成错误:', error);
-      toast.error('结构生成失败，请重试');
-    } finally {
-      setIsGeneratingStructure(false);
+      console.error('Structure generation error:', error);
+      setGenerationState({
+        step: 'input',
+        isGeneratingStructure: false,
+        isGeneratingImage: false,
+        hasStructure: false,
+        hasImage: false,
+        error: error instanceof Error ? error.message : 'Structure generation failed',
+      });
+      toast.error(error instanceof Error ? error.message : 'Structure generation failed');
     }
   };
 
-  // 生成图片
-  const handleGenerateImage = async (structure?: string) => {
-    const structureToUse = structure || generatedStructure;
-    if (!structureToUse.trim()) {
-      toast.error('请先生成思维导图结构');
+  // 第二阶段：生成思维导图图片
+  const handleGenerateImage = async () => {
+    if (!editableStructure) {
+      toast.error('No structure available for image generation');
       return;
     }
 
-    setIsGeneratingImage(true);
+    setGenerationState({
+      step: 'image',
+      isGeneratingStructure: false,
+      isGeneratingImage: true,
+      hasStructure: true,
+      hasImage: false,
+      error: null,
+    });
 
     try {
       const response = await fetch('/api/generate-image', {
@@ -177,325 +289,447 @@ export function GenerationInterface() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          structure: structureToUse,
-          style,
-          ratio: aspectRatio,
-          language,
+          structure: editableStructure,
+          style: style,
+          aspectRatio: aspectRatio,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.code === 'DAILY_LIMIT_REACHED') {
-          setHasQuota(false);
-          toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
-          return;
-        }
-        throw new Error(data.error || '图片生成失败');
+        throw new Error(data.error || 'Image generation failed');
       }
 
-      const imageUrl = data.imageUrl || '';
-      setCurrentImageUrl(imageUrl);
-      
-      // 只有登录且付费的用户才保存到数据库
-      if (user && isSubscribed) {
-        await saveImageToDatabase(imageUrl, structureToUse);
-      }
+      setGeneratedImageUrl(data.imageUrl);
+      setGenerationState({
+        step: 'image',
+        isGeneratingStructure: false,
+        isGeneratingImage: false,
+        hasStructure: true,
+        hasImage: true,
+        error: null,
+      });
 
-      toast.success('思维导图图片生成成功！');
+      // 保存生成记录
+      const newRecord: GenerationRecord = {
+        id: Date.now().toString(),
+        inputText: input,
+        imageUrl: data.imageUrl,
+        language: language,
+        style: style,
+        aspectRatio: aspectRatio,
+        createdAt: new Date()
+      };
+      saveGenerationRecord(newRecord);
+
+      toast.success('Mind map generated successfully!');
     } catch (error) {
-      console.error('图片生成错误:', error);
-      toast.error('图片生成失败，请重试');
-    } finally {
-      setIsGeneratingImage(false);
+      console.error('Image generation error:', error);
+      setGenerationState({
+        step: 'structure',
+        isGeneratingStructure: false,
+        isGeneratingImage: false,
+        hasStructure: true,
+        hasImage: false,
+        error: error instanceof Error ? error.message : 'Image generation failed',
+      });
+      toast.error(error instanceof Error ? error.message : 'Image generation failed');
     }
   };
 
-  // 保存图片记录到数据库
-  const saveImageToDatabase = async (imageUrl: string, structure: string) => {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('generated_images')
-        .insert({
-          user_id: user!.id,
-          prompt: input,
-          style,
-          aspect_ratio: aspectRatio,
-          language,
-          image_url: imageUrl,
-          structure_content: structure,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // 更新历史记录
-      setGeneratedImages(prev => [data, ...prev.slice(0, 9)]);
-    } catch (error) {
-      console.error('保存图片记录失败:', error);
-    }
+  const handleCloseModal = () => {
+    setShowStructureModal(false);
   };
 
-  // 下载图片
-  const handleDownload = (imageUrl?: string) => {
-    const urlToDownload = imageUrl || currentImageUrl;
-    if (urlToDownload) {
-      const link = document.createElement('a');
-      link.href = urlToDownload;
-      link.download = `mindmap-${Date.now()}.png`;
-      link.click();
-      toast.success('思维导图已下载！');
+  const handleConfirmStructure = () => {
+    setShowStructureModal(false);
+    // 结构确认后，直接开始生成图片
+    handleGenerateImage();
+  };
+
+  const handleRegenerate = () => {
+    if (generationState.hasStructure && !generationState.hasImage) {
+      handleGenerateImage();
     } else {
-      toast.error('没有可下载的图片');
+      handleGenerateStructure();
     }
   };
+
+  const handleDownload = (imageUrl?: string) => {
+    const downloadUrl = imageUrl || generatedImageUrl;
+    if (downloadUrl) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'mindmap.png';
+      link.click();
+      toast.success('Mind map downloaded!');
+    } else {
+      toast.error('No image available for download');
+    }
+  };
+
+  const handleStartOver = () => {
+    setGenerationState({
+      step: 'input',
+      isGeneratingStructure: false,
+      isGeneratingImage: false,
+      hasStructure: false,
+      hasImage: false,
+      error: null,
+    });
+    setGeneratedStructure('');
+    setEditableStructure('');
+    setGeneratedImageUrl('');
+    setShowStructureModal(false);
+    setInput('');
+  };
+
+  const selectedAspectRatio = aspectRatioOptions.find(option => option.value === aspectRatio);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-bg">
+      {/* 主内容区域 */}
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Mind Map Generator</h1>
-          <p className="text-gray-600">Transform your ideas into beautiful visual mind maps</p>
-        </div>
-
-        {/* 上半部分：图片显示区域 */}
-        <div className="mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-center min-h-[400px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-              {isGeneratingStructure || isGeneratingImage ? (
-                <div className="text-center space-y-4">
-                  <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-                  <p className="text-gray-600 text-lg">
-                    {isGeneratingStructure ? 'Analyzing content...' : 'Generating image...'}
-                  </p>
-                </div>
-              ) : currentImageUrl ? (
-                <div className="relative w-full max-w-4xl">
-                  <Image
-                    src={currentImageUrl}
-                    alt="Generated Mind Map"
-                    width={800}
-                    height={600}
-                    className="w-full h-auto rounded-lg shadow-lg"
-                    unoptimized
-                  />
-                  <div className="absolute top-4 right-4 flex space-x-2">
-                    <button
-                      onClick={() => handleDownload()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </button>
-                    <button
-                      onClick={() => handleGenerateImage()}
-                      disabled={!generatedStructure}
-                      className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center disabled:opacity-50"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerate
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center space-y-4">
-                  <Sparkles className="w-16 h-16 text-gray-400 mx-auto" />
-                  <p className="text-gray-600 text-lg">Enter content below to generate your mind map</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 下半部分：输入控制区域和历史记录 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* 左侧：输入和控制区域 (占2/3) */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Content Input</h2>
+        {/* 上部分：输入控制区域 */}
+        <div className="bg-neutral-card rounded-xl p-6 shadow-soft mb-8">
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-text mb-6">Create Mind Map</h1>
+            
+            {/* 主要输入区域 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               
-              <div className="space-y-4">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Enter your text, ideas, or article content here. Our AI will analyze it and create a structured mind map..."
-                  className="w-full h-32 p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 placeholder-gray-500 bg-white"
-                  disabled={isGeneratingStructure || isGeneratingImage}
-                />
-                <div className="text-sm text-gray-500">
-                  {input.length}/2000 characters
-                </div>
-              </div>
-
-              {/* 配置选项 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Language</label>
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isGeneratingStructure || isGeneratingImage}
-                  >
-                    {languageOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Style</label>
-                  <select
-                    value={style}
-                    onChange={(e) => setStyle(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isGeneratingStructure || isGeneratingImage}
-                  >
-                    {styleOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Aspect Ratio</label>
-                  <select
-                    value={aspectRatio}
-                    onChange={(e) => setAspectRatio(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isGeneratingStructure || isGeneratingImage}
-                  >
-                    {aspectRatioOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* 生成按钮 */}
-              <button
-                onClick={handleGenerateStructure}
-                disabled={!input.trim() || isGeneratingStructure || isGeneratingImage || !hasQuota}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-lg text-lg font-medium shadow-lg mt-6 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGeneratingStructure || isGeneratingImage ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 mr-3" />
-                    Generate Mind Map
-                  </>
-                )}
-              </button>
-
-              {/* 配额警告 */}
-              {!hasQuota && (
-                <div className="flex items-center space-x-2 p-3 bg-orange-50 border border-orange-200 rounded-lg mt-4">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
-                  <span className="text-sm text-orange-700">
-                    Daily limit reached. {!user && 'Please log in or '}Upgrade to Pro for unlimited access!
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 右侧：历史记录 (占1/3) */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <History className="w-5 h-5 mr-2" />
-                  History
-                </h2>
-                {isSubscribed && (
-                  <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
-                    <Crown className="w-3 h-3 mr-1" />
-                    Pro
+              {/* 左侧：文本输入 */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <label className="block text-lg font-semibold text-text">
+                    Input Content
+                  </label>
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Enter your text, ideas, or article content here. Our AI will analyze it and create a structured mind map..."
+                    className="w-full h-32 p-4 border border-border rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text placeholder-text-muted bg-neutral-bg"
+                    disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
+                  />
+                  <div className="text-sm text-text-muted">
+                    {input.length}/2000 characters
                   </div>
-                )}
-              </div>
+                </div>
 
-              {!user ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Please log in to view generation history</p>
-                </div>
-              ) : !isSubscribed ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Crown className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
-                  <p className="mb-2 font-medium">Upgrade to Pro</p>
-                  <p className="text-sm">Save and view all your mind maps</p>
-                </div>
-              ) : isLoadingHistory ? (
-                <div className="text-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-                </div>
-              ) : generatedImages.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>No history yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {generatedImages.map((image) => (
-                    <div
-                      key={image.id}
-                      className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => setCurrentImageUrl(image.image_url)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <Image
-                          src={image.image_url}
-                          alt="Mind map thumbnail"
-                          width={60}
-                          height={45}
-                          className="rounded object-cover flex-shrink-0"
-                          unoptimized
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate">
-                            {image.prompt.slice(0, 50)}...
-                          </p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">
-                              {styleOptions.find(s => s.value === image.style)?.label}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(image.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownload(image.image_url);
-                          }}
-                          className="text-gray-400 hover:text-gray-600 p-1"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
+                {/* 限制提示 */}
+                {!hasQuota && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
+                    <div className="flex items-center space-x-3">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-yellow-800 mb-1">Daily limit reached</h4>
+                        <p className="text-sm text-yellow-700">Free users can create 3 mind maps daily. Upgrade to Pro for unlimited use!</p>
                       </div>
                     </div>
-                  ))}
+                    <button 
+                      onClick={() => window.open('/settings', '_blank')}
+                      className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Crown className="w-4 h-4" />
+                      <span>Upgrade to Pro</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 右侧：配置选项 */}
+              <div className="space-y-6">
+                
+                {/* 比例选择 */}
+                <div className="space-y-4">
+                  <label className="block text-lg font-semibold text-text">
+                    Aspect Ratio
+                  </label>
+                  <div className="grid grid-cols-5 gap-3">
+                    {aspectRatioOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setAspectRatio(option.value)}
+                        disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
+                        className={`p-3 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
+                          aspectRatio === option.value
+                            ? 'border-primary bg-primary/10 shadow-lg scale-105'
+                            : 'border-border bg-neutral-bg hover:border-primary/50 hover:bg-primary/5'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <div className="flex flex-col items-center space-y-2">
+                          {/* 可视化形状 */}
+                          <div className={`${option.shapeClass} border-2 rounded-sm ${
+                            aspectRatio === option.value 
+                              ? 'bg-primary/30 border-primary shadow-md' 
+                              : 'bg-gray-200 border-gray-300'
+                          }`}></div>
+                          
+                          {/* 比例标签 */}
+                          <div className={`text-xs font-semibold ${
+                            aspectRatio === option.value ? 'text-primary' : 'text-text-muted'
+                          }`}>
+                            {option.ratio}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 风格和语言 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* 风格选择 */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-text">
+                      Art Style
+                    </label>
+                    <select
+                      value={style}
+                      onChange={(e) => setStyle(e.target.value)}
+                      className="w-full p-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg"
+                      disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
+                    >
+                      {styleOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 语言选择 */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-text">
+                      Language
+                    </label>
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                      className="w-full p-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg"
+                      disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
+                    >
+                      {languageOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              
+              {/* 生成结构按钮 */}
+              {generationState.step === 'input' && (
+                <button
+                  onClick={handleGenerateStructure}
+                  disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
+                  className="flex-1 bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {generationState.isGeneratingStructure ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Generating Structure...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      <span>Generate Mind Map Structure</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* 生成图片按钮 */}
+              {generationState.hasStructure && !generationState.hasImage && (
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={generationState.isGeneratingImage || !hasQuota}
+                  className="flex-1 bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {generationState.isGeneratingImage ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Generating Image...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      <span>Generate Mind Map Image</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* 完成后的操作按钮 */}
+              {generationState.hasImage && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleRegenerate}
+                    className="flex-1 border-2 border-accent text-accent px-4 py-3 rounded-xl font-medium hover:bg-accent hover:text-white transition-colors-smooth flex items-center justify-center space-x-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Regenerate</span>
+                  </button>
+                  <button
+                    onClick={() => handleDownload()}
+                    className="flex-1 bg-secondary text-text px-4 py-3 rounded-xl font-medium hover-darken transition-colors-smooth flex items-center justify-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                  <button
+                    onClick={handleStartOver}
+                    className="flex-1 bg-primary text-white px-6 py-3 rounded-xl font-semibold hover-darken active-darken transition-colors-smooth shadow-soft"
+                  >
+                    Create New
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* 下部分：生成记录区域 */}
+        <div className="bg-neutral-card rounded-xl p-6 shadow-soft">
+          <h2 className="text-2xl font-bold text-text mb-6">Generation History</h2>
+          
+          {generationRecords.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-secondary/20 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <Sparkles className="w-12 h-12 text-secondary" />
+              </div>
+              <h3 className="text-xl font-semibold text-text mb-2">
+                No generation history yet
+              </h3>
+              <p className="text-text-muted max-w-md mx-auto">
+                Your generated mind maps will appear here. Start by creating your first mind map above!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {generationRecords.map((record) => (
+                <div key={record.id} className="bg-neutral-bg rounded-xl border border-border p-4 hover:shadow-lg transition-shadow group">
+                  
+                  {/* 输入文字 */}
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-text mb-2 text-sm">Input Text:</h4>
+                    <p className="text-text-muted text-sm line-clamp-3">
+                      {record.inputText}
+                    </p>
+                  </div>
+
+                  {/* 生成图片 */}
+                  <div className="mb-4">
+                    <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-[4/3]">
+                      <img 
+                        src={record.imageUrl} 
+                        alt="Generated Mind Map" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 元数据 */}
+                  <div className="mb-4 text-xs text-text-muted space-y-1">
+                    <div className="flex justify-between">
+                      <span>Style:</span>
+                      <span className="font-medium">{styleOptions.find(s => s.value === record.style)?.label || record.style}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Ratio:</span>
+                      <span className="font-medium">{record.aspectRatio}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Language:</span>
+                      <span className="font-medium">{languageOptions.find(l => l.value === record.language)?.label || record.language}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Created:</span>
+                      <span className="font-medium">{record.createdAt.toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {/* 操作按钮 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDownload(record.imageUrl)}
+                      className="flex-1 bg-primary text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Download</span>
+                    </button>
+                    <button
+                      onClick={() => deleteGenerationRecord(record.id)}
+                      className="px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors flex items-center justify-center"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 结构审查模态框 */}
+        {showStructureModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+              {/* 模态框头部 */}
+              <div className="bg-gradient-to-r from-primary to-accent p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Mind Map Structure Generated!</h2>
+                    <p className="text-white/90">Please review and edit the structure below, then click "Generate Image" to create your mind map.</p>
+                  </div>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 模态框内容 */}
+              <div className="p-6 max-h-[50vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Mind Map Structure</h3>
+                  <textarea
+                    value={editableStructure}
+                    onChange={(e) => setEditableStructure(e.target.value)}
+                    className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors font-mono text-sm bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* 模态框底部 */}
+              <div className="bg-gray-50 p-6">
+                <div className="flex justify-end space-x-4">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleConfirmStructure}
+                    className="px-6 py-3 bg-accent text-white rounded-xl font-semibold hover:bg-accent/90 transition-colors"
+                  >
+                    Generate Image
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
