@@ -1,7 +1,50 @@
+"use client"
+
 import Link from 'next/link';
 import { Check } from 'lucide-react';
+import { useState } from 'react';
 
 export function PricingPreview() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 处理Pro计划支付
+  const handleProUpgrade = async () => {
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan: 'pro' }),
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Payment error:', data.error);
+        // 如果用户未登录或其他错误，跳转到设置页面
+        if (response.status === 401) {
+          window.location.href = '/settings';
+          return;
+        }
+        alert('Payment initialization failed. Please try again.');
+        return;
+      }
+
+      // 重定向到Creem支付页面
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const plans = [
     {
       name: 'Free',
@@ -91,12 +134,15 @@ export function PricingPreview() {
               </ul>
 
               {plan.name === 'Pro' ? (
-                <Link
-                  href="/settings"
-                  className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle}`}
+                <button
+                  onClick={handleProUpgrade}
+                  disabled={isLoading}
+                  className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle} ${
+                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  {plan.buttonText}
-                </Link>
+                  {isLoading ? 'Loading...' : plan.buttonText}
+                </button>
               ) : (
                 <button
                   className={`block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors-smooth ${plan.buttonStyle}`}
