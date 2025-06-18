@@ -171,6 +171,16 @@ Style requirements:
       originalResponse: data
     });
     
+    // 图片生成成功，但只有付费用户才保存记录到数据库
+    // 这里不直接保存，让前端根据用户订阅状态决定是否保存
+    
+    return NextResponse.json({ 
+      success: true,
+      imageUrl: imageUrl,
+      originalResponse: data,
+      message: 'Image generated successfully. Record will be saved if user is subscribed to Pro.'
+    });
+    
   } catch (error) {
     console.error('Request error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

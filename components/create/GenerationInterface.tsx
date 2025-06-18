@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle } from 'lucide-react';
+import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCircle, History } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { checkDailyLimit } from '@/lib/supabase/utils';
+import { checkDailyLimit, getUserSubscription } from '@/lib/supabase/utils';
+import { createClient } from '@/lib/supabase/client';
 
-interface GenerationState {
-  step: 'input' | 'structure' | 'image';
-  isGeneratingStructure: boolean;
-  isGeneratingImage: boolean;
-  hasStructure: boolean;
-  hasImage: boolean;
-  error: string | null;
+interface GeneratedImage {
+  id: string;
+  prompt: string;
+  style: string;
+  aspect_ratio: string;
+  language: string;
+  image_url: string;
+  structure_content: string;
+  created_at: string;
 }
 
 export function GenerationInterface() {
@@ -23,100 +26,34 @@ export function GenerationInterface() {
   const [style, setStyle] = useState('kawaii');
   const [aspectRatio, setAspectRatio] = useState('4:3');
   
-  // 限制状态管理
-  const [hasQuota, setHasQuota] = useState(true);
-  const [quotaLoading, setQuotaLoading] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-
-  const [generationState, setGenerationState] = useState<GenerationState>({
-    step: 'input',
-    isGeneratingStructure: false,
-    isGeneratingImage: false,
-    hasStructure: false,
-    hasImage: false,
-    error: null,
-  });
-
+  // 生成状态
+  const [isGeneratingStructure, setIsGeneratingStructure] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedStructure, setGeneratedStructure] = useState('');
-  const [editableStructure, setEditableStructure] = useState('');
-  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
   
-  const [showStructureModal, setShowStructureModal] = useState(false);
-
-  // 检查用户限制
-  useEffect(() => {
-    const checkUserQuota = async () => {
-      setQuotaLoading(true);
-      try {
-        // 模拟获取客户端IP（实际应用中需要从服务端获取）
-        const mockIP = '127.0.0.1';
-        const quota = await checkDailyLimit(user?.id, mockIP);
-        setHasQuota(quota);
-      } catch (error) {
-        console.error('检查限制失败:', error);
-        // 如果检查失败，默认允许使用
-        setHasQuota(true);
-      } finally {
-        setQuotaLoading(false);
-      }
-    };
-
-    checkUserQuota();
-  }, [user]);
-
-  // 重新检查配额的函数
-  const recheckQuota = async () => {
-    try {
-      // 模拟获取客户端IP（实际应用中需要从服务端获取）
-      const mockIP = '127.0.0.1';
-      const quota = await checkDailyLimit(user?.id, mockIP);
-      setHasQuota(quota);
-    } catch (error) {
-      console.error('重新检查配额失败:', error);
-      // 检查失败时默认有配额，避免影响用户体验
-      setHasQuota(true);
-    }
-  };
+  // 历史记录
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  
+  // 用户状态
+  const [hasQuota, setHasQuota] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const aspectRatioOptions = [
-    { 
-      value: '1:1', 
-      ratio: '1:1',
-      dimensions: 'w-full aspect-square',
-      shapeClass: 'w-7 h-7'
-    },
-    { 
-      value: '3:4', 
-      ratio: '3:4',
-      dimensions: 'w-full aspect-[3/4]',
-      shapeClass: 'w-6 h-8'
-    },
-    { 
-      value: '9:16', 
-      ratio: '9:16',
-      dimensions: 'w-full aspect-[9/16]',
-      shapeClass: 'w-4 h-8'
-    },
-    { 
-      value: '4:3', 
-      ratio: '4:3',
-      dimensions: 'w-full aspect-[4/3]',
-      shapeClass: 'w-9 h-7'
-    },
-    { 
-      value: '16:9', 
-      ratio: '16:9',
-      dimensions: 'w-full aspect-video',
-      shapeClass: 'w-10 h-6'
-    },
+    { value: '1:1', label: '1:1 (Square)' },
+    { value: '3:4', label: '3:4 (Portrait)' },
+    { value: '9:16', label: '9:16 (Vertical)' },
+    { value: '4:3', label: '4:3 (Landscape)' },
+    { value: '16:9', label: '16:9 (Wide)' },
   ];
 
   const styleOptions = [
-    { value: 'kawaii', label: 'Kawaii Flat Cartoon Style', description: 'Cute flat cartoon with bright colors' },
-    { value: 'flat', label: 'Flat Minimalist Style', description: 'Clean and simple flat design' },
-    { value: 'watercolor', label: 'Watercolor Artistic', description: 'Soft watercolor painting style' },
-    { value: 'chalkboard', label: 'Chalkboard Style', description: 'Chalk on blackboard style' },
-    { value: '3d', label: '3D', description: 'Three-dimensional rendered style' }
+    { value: 'kawaii', label: 'Kawaii Flat Cartoon' },
+    { value: 'flat', label: 'Flat Minimalist' },
+    { value: 'watercolor', label: 'Watercolor Artistic' },
+    { value: 'chalkboard', label: 'Chalkboard Style' },
+    { value: '3d', label: '3D Rendered' }
   ];
 
   const languageOptions = [
@@ -130,21 +67,62 @@ export function GenerationInterface() {
     { value: 'portuguese', label: 'Português (Portuguese)' },
   ];
 
-  // 第一阶段：生成思维导图结构
+  // 检查用户订阅状态和配额
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      if (!user) return;
+      
+      try {
+        // 检查订阅状态
+        const subscription = await getUserSubscription(user.id);
+        setIsSubscribed(subscription?.status === 'active');
+        
+        // 检查每日配额
+        const mockIP = '127.0.0.1';
+        const quota = await checkDailyLimit(user.id, mockIP);
+        setHasQuota(quota);
+      } catch (error) {
+        console.error('检查用户状态失败:', error);
+      }
+    };
+
+    checkUserStatus();
+  }, [user]);
+
+  // 加载历史记录（只有登录且付费用户才显示）
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!user || !isSubscribed) return;
+      
+      setIsLoadingHistory(true);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('generated_images')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+        setGeneratedImages(data || []);
+      } catch (error) {
+        console.error('加载历史记录失败:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [user, isSubscribed]);
+
+  // 生成思维导图结构
   const handleGenerateStructure = async () => {
     if (!input.trim()) {
-      toast.error('Please enter content to generate mind map');
+      toast.error('请输入内容来生成思维导图');
       return;
     }
 
-    setGenerationState({
-      step: 'structure',
-      isGeneratingStructure: true,
-      isGeneratingImage: false,
-      hasStructure: false,
-      hasImage: false,
-      error: null,
-    });
+    setIsGeneratingStructure(true);
 
     try {
       const response = await fetch('/api/generate-structure', {
@@ -161,70 +139,36 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        // 检查是否是限制达到的错误
         if (data.code === 'DAILY_LIMIT_REACHED') {
           setHasQuota(false);
-          setShowUpgradePrompt(true);
           toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
-          setGenerationState({
-            step: 'input',
-            isGeneratingStructure: false,
-            isGeneratingImage: false,
-            hasStructure: false,
-            hasImage: false,
-            error: null,
-          });
           return;
         }
-        throw new Error(data.error || 'Structure generation failed');
+        throw new Error(data.error || '结构生成失败');
       }
 
       setGeneratedStructure(data.structure);
-      setEditableStructure(data.structure);
-      setGenerationState({
-        step: 'structure',
-        isGeneratingStructure: false,
-        isGeneratingImage: false,
-        hasStructure: true,
-        hasImage: false,
-        error: null,
-      });
-
-      setShowStructureModal(true);
-      toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
+      toast.success('思维导图结构生成成功！');
       
-      // 生成成功后重新检查限制状态
-      await recheckQuota();
+      // 自动开始生成图片
+      await handleGenerateImage(data.structure);
     } catch (error) {
-      console.error('Structure generation error:', error);
-      setGenerationState({
-        step: 'input',
-        isGeneratingStructure: false,
-        isGeneratingImage: false,
-        hasStructure: false,
-        hasImage: false,
-        error: error instanceof Error ? error.message : 'Structure generation failed',
-      });
-
-      toast.error('Structure generation failed, please try again');
+      console.error('结构生成错误:', error);
+      toast.error('结构生成失败，请重试');
+    } finally {
+      setIsGeneratingStructure(false);
     }
   };
 
-  // 第二阶段：生成思维导图图片
-  const handleGenerateImage = async () => {
-    if (!editableStructure.trim()) {
-      toast.error('Please generate or edit mind map structure first');
+  // 生成图片
+  const handleGenerateImage = async (structure?: string) => {
+    const structureToUse = structure || generatedStructure;
+    if (!structureToUse.trim()) {
+      toast.error('请先生成思维导图结构');
       return;
     }
 
-    setGenerationState({
-      step: 'image',
-      isGeneratingStructure: false,
-      isGeneratingImage: true,
-      hasStructure: true,
-      hasImage: false,
-      error: null,
-    });
+    setIsGeneratingImage(true);
 
     try {
       const response = await fetch('/api/generate-image', {
@@ -233,523 +177,325 @@ export function GenerationInterface() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          structure: editableStructure,
-          style: style,
+          structure: structureToUse,
+          style,
           ratio: aspectRatio,
-          language: language,
+          language,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // 检查是否是限制达到的错误
         if (data.code === 'DAILY_LIMIT_REACHED') {
           setHasQuota(false);
-          setShowUpgradePrompt(true);
           toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
-          setGenerationState({
-            step: 'structure',
-            isGeneratingStructure: false,
-            isGeneratingImage: false,
-            hasStructure: true,
-            hasImage: false,
-            error: null,
-          });
           return;
         }
-        throw new Error(data.error || 'Image generation failed');
+        throw new Error(data.error || '图片生成失败');
       }
 
-      // 提取图片URL（根据API响应格式调整）
       const imageUrl = data.imageUrl || '';
-      console.log('Received image URL:', imageUrl);
-      setGeneratedImageUrl(imageUrl);
+      setCurrentImageUrl(imageUrl);
       
-      setGenerationState({
-        step: 'image',
-        isGeneratingStructure: false,
-        isGeneratingImage: false,
-        hasStructure: true,
-        hasImage: true,
-        error: null,
-      });
+      // 只有登录且付费的用户才保存到数据库
+      if (user && isSubscribed) {
+        await saveImageToDatabase(imageUrl, structureToUse);
+      }
 
-      toast.success('Mind map image generated successfully!');
+      toast.success('思维导图图片生成成功！');
     } catch (error) {
-      console.error('Image generation error:', error);
-      setGenerationState({
-        step: 'structure',
-        isGeneratingStructure: false,
-        isGeneratingImage: false,
-        hasStructure: true,
-        hasImage: false,
-        error: error instanceof Error ? error.message : 'Image generation failed',
-      });
-
-      toast.error('Image generation failed, please try again');
+      console.error('图片生成错误:', error);
+      toast.error('图片生成失败，请重试');
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setShowStructureModal(false);
-    // Discard changes when closing modal
-    setEditableStructure(generatedStructure);
-  };
+  // 保存图片记录到数据库
+  const saveImageToDatabase = async (imageUrl: string, structure: string) => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('generated_images')
+        .insert({
+          user_id: user!.id,
+          prompt: input,
+          style,
+          aspect_ratio: aspectRatio,
+          language,
+          image_url: imageUrl,
+          structure_content: structure,
+        })
+        .select()
+        .single();
 
-  const handleConfirmStructure = () => {
-    setShowStructureModal(false);
-    // 结构确认后，直接开始生成图片
-    handleGenerateImage();
-  };
+      if (error) throw error;
 
-  const handleRegenerate = () => {
-    if (generationState.hasStructure && !generationState.hasImage) {
-      handleGenerateImage();
-    } else {
-      handleGenerateStructure();
+      // 更新历史记录
+      setGeneratedImages(prev => [data, ...prev.slice(0, 9)]);
+    } catch (error) {
+      console.error('保存图片记录失败:', error);
     }
   };
 
-  const handleDownload = () => {
-    if (generatedImageUrl) {
+  // 下载图片
+  const handleDownload = (imageUrl?: string) => {
+    const urlToDownload = imageUrl || currentImageUrl;
+    if (urlToDownload) {
       const link = document.createElement('a');
-      link.href = generatedImageUrl;
-      link.download = 'mindmap.png';
+      link.href = urlToDownload;
+      link.download = `mindmap-${Date.now()}.png`;
       link.click();
-      toast.success('Mind map downloaded!');
+      toast.success('思维导图已下载！');
     } else {
-      toast.error('No image available for download');
+      toast.error('没有可下载的图片');
     }
   };
-
-  const handleStartOver = () => {
-    setGenerationState({
-      step: 'input',
-      isGeneratingStructure: false,
-      isGeneratingImage: false,
-      hasStructure: false,
-      hasImage: false,
-      error: null,
-    });
-    setGeneratedStructure('');
-    setEditableStructure('');
-    setGeneratedImageUrl('');
-    setShowStructureModal(false);
-  };
-
-  const selectedAspectRatio = aspectRatioOptions.find(option => option.value === aspectRatio);
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
-      {/* Main Content */}
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[480px_1fr] gap-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* 页面标题 */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Mind Map Generator</h1>
+          <p className="text-gray-600">Transform your ideas into beautiful visual mind maps</p>
+        </div>
+
+        {/* 上半部分：图片显示区域 */}
+        <div className="mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-center min-h-[400px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+              {isGeneratingStructure || isGeneratingImage ? (
+                <div className="text-center space-y-4">
+                  <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+                  <p className="text-gray-600 text-lg">
+                    {isGeneratingStructure ? 'Analyzing content...' : 'Generating image...'}
+                  </p>
+                </div>
+              ) : currentImageUrl ? (
+                <div className="relative w-full max-w-4xl">
+                  <Image
+                    src={currentImageUrl}
+                    alt="Generated Mind Map"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto rounded-lg shadow-lg"
+                    unoptimized
+                  />
+                  <div className="absolute top-4 right-4 flex space-x-2">
+                    <button
+                      onClick={() => handleDownload()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </button>
+                    <button
+                      onClick={() => handleGenerateImage()}
+                      disabled={!generatedStructure}
+                      className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center disabled:opacity-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Regenerate
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <Sparkles className="w-16 h-16 text-gray-400 mx-auto" />
+                  <p className="text-gray-600 text-lg">Enter content below to generate your mind map</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 下半部分：输入控制区域和历史记录 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Left Panel - Controls */}
-          <div className="bg-neutral-card rounded-xl p-6 shadow-soft h-fit">
-            <div className="space-y-6">
+          {/* 左侧：输入和控制区域 (占2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Content Input</h2>
               
-              {/* Input Section */}
               <div className="space-y-4">
-                <label className="block text-lg font-semibold text-text">
-                  Input Content
-                </label>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Enter your text, ideas, or article content here. Our AI will analyze it and create a structured mind map..."
-                  className="w-full h-32 p-4 border border-border rounded-xl resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text placeholder-text-muted bg-neutral-bg"
-                  disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
+                  className="w-full h-32 p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 placeholder-gray-500 bg-white"
+                  disabled={isGeneratingStructure || isGeneratingImage}
                 />
-                <div className="text-sm text-text-muted">
+                <div className="text-sm text-gray-500">
                   {input.length}/2000 characters
                 </div>
               </div>
 
+              {/* 配置选项 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Language</label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isGeneratingStructure || isGeneratingImage}
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Style</label>
+                  <select
+                    value={style}
+                    onChange={(e) => setStyle(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isGeneratingStructure || isGeneratingImage}
+                  >
+                    {styleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Aspect Ratio - Visual Selection */}
-              <div className="space-y-4">
-                <label className="block text-lg font-semibold text-text">
-                  Aspect Ratio
-                </label>
-                <div className="grid grid-cols-5 gap-3">
-                  {aspectRatioOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setAspectRatio(option.value)}
-                      disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
-                      className={`p-3 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
-                        aspectRatio === option.value
-                          ? 'border-primary bg-primary/10 shadow-lg scale-105'
-                          : 'border-border bg-neutral-bg hover:border-primary/50 hover:bg-primary/5'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <div className="flex flex-col items-center space-y-2">
-                        {/* Visual Shape */}
-                        <div className={`${option.shapeClass} border-2 rounded-sm ${
-                          aspectRatio === option.value 
-                            ? 'bg-primary/30 border-primary shadow-md' 
-                            : 'bg-gray-200 border-gray-300'
-                        }`}></div>
-                        
-                        {/* Ratio Label */}
-                        <div className={`text-xs font-semibold ${
-                          aspectRatio === option.value ? 'text-primary' : 'text-text-muted'
-                        }`}>
-                          {option.ratio}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Aspect Ratio</label>
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isGeneratingStructure || isGeneratingImage}
+                  >
+                    {aspectRatioOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Style Selection */}
-              <div className="space-y-4">
-                <label className="block text-lg font-semibold text-text">
-                  Art Style
-                </label>
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                  className="w-full p-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg"
-                  disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
-                >
-                  {styleOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="text-sm text-text-muted">
-                  {styleOptions.find(s => s.value === style)?.description}
-                </div>
-              </div>
+              {/* 生成按钮 */}
+              <button
+                onClick={handleGenerateStructure}
+                disabled={!input.trim() || isGeneratingStructure || isGeneratingImage || !hasQuota}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-lg text-lg font-medium shadow-lg mt-6 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingStructure || isGeneratingImage ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 mr-3" />
+                    Generate Mind Map
+                  </>
+                )}
+              </button>
 
-              {/* Language Selection */}
-              <div className="space-y-4">
-                <label className="block text-lg font-semibold text-text">
-                  Language
-                </label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full p-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-colors-smooth text-text bg-neutral-bg"
-                  disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage}
-                >
-                  {languageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 限制提示 */}
+              {/* 配额警告 */}
               {!hasQuota && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
-                  <div className="flex items-center space-x-3">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-yellow-800 mb-1">每日限制已达上限</h4>
-                      <p className="text-sm text-yellow-700">免费用户每日可创建3个思维导图。升级到Pro版本享受无限制使用！</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => window.open('/settings', '_blank')}
-                    className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Crown className="w-4 h-4" />
-                    <span>立即升级到Pro</span>
-                  </button>
+                <div className="flex items-center space-x-2 p-3 bg-orange-50 border border-orange-200 rounded-lg mt-4">
+                  <AlertCircle className="w-5 h-5 text-orange-500" />
+                  <span className="text-sm text-orange-700">
+                    Daily limit reached. {!user && 'Please log in or '}Upgrade to Pro for unlimited access!
+                  </span>
                 </div>
               )}
+            </div>
+          </div>
 
-              {/* Step 1: Generate Structure Button */}
-              {generationState.step === 'input' && (
-                <button
-                  onClick={handleGenerateStructure}
-                  disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
-                  className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  {generationState.isGeneratingStructure ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Generating Structure...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate Mind Map Structure</span>
-                    </>
-                  )}
-                </button>
-              )}
+          {/* 右侧：历史记录 (占1/3) */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <History className="w-5 h-5 mr-2" />
+                  History
+                </h2>
+                {isSubscribed && (
+                  <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Pro
+                  </div>
+                )}
+              </div>
 
-              {/* Step 2: Generate Image Button */}
-              {generationState.hasStructure && !generationState.hasImage && (
-                <button
-                  onClick={handleGenerateImage}
-                  disabled={generationState.isGeneratingImage || !hasQuota}
-                  className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  {generationState.isGeneratingImage ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Generating Image...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate Mind Map Image</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              {/* Action Buttons (when image generated) */}
-              {generationState.hasImage && (
+              {!user ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Please log in to view generation history</p>
+                </div>
+              ) : !isSubscribed ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Crown className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
+                  <p className="mb-2 font-medium">Upgrade to Pro</p>
+                  <p className="text-sm">Save and view all your mind maps</p>
+                </div>
+              ) : isLoadingHistory ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                </div>
+              ) : generatedImages.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No history yet</p>
+                </div>
+              ) : (
                 <div className="space-y-3">
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={handleRegenerate}
-                      className="flex-1 border-2 border-accent text-accent px-4 py-3 rounded-xl font-medium hover:bg-accent hover:text-white transition-colors-smooth flex items-center justify-center space-x-2"
+                  {generatedImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setCurrentImageUrl(image.image_url)}
                     >
-                      <RefreshCw className="w-4 h-4" />
-                      <span>Regenerate</span>
-                    </button>
-                    <button
-                      onClick={handleDownload}
-                      className="flex-1 bg-secondary text-text px-4 py-3 rounded-xl font-medium hover-darken transition-colors-smooth flex items-center justify-center space-x-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Download</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleStartOver}
-                    className="w-full bg-primary text-white px-6 py-3 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft"
-                  >
-                    Create New
-                  </button>
+                      <div className="flex items-start space-x-3">
+                        <Image
+                          src={image.image_url}
+                          alt="Mind map thumbnail"
+                          width={60}
+                          height={45}
+                          className="rounded object-cover flex-shrink-0"
+                          unoptimized
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {image.prompt.slice(0, 50)}...
+                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">
+                              {styleOptions.find(s => s.value === image.style)?.label}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(image.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(image.image_url);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 p-1"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Right Panel - Preview Canvas */}
-          <div className="bg-neutral-card rounded-xl p-6 shadow-soft">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-text">Preview</h2>
-              
-              {/* Preview Container */}
-              <div className="relative">
-                <div className={`${selectedAspectRatio?.dimensions} bg-neutral-bg border-2 border-dashed border-border rounded-xl overflow-hidden relative`}>
-                  
-                  {/* Loading Overlay - Structure Generation */}
-                  {generationState.isGeneratingStructure && (
-                    <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
-                      <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">Generating mind map structure...</div>
-                        <div className="text-text-muted">AI is analyzing your content and creating structured outline</div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
-                          <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '40%' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Loading Overlay - Image Generation */}
-                  {generationState.isGeneratingImage && (
-                    <div className="absolute inset-0 bg-neutral-card/90 flex items-center justify-center z-10">
-                      <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <div className="text-lg font-semibold text-text mb-2">Generating mind map image...</div>
-                        <div className="text-text-muted">AI is converting structure into comic-style mind map</div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-64 bg-border rounded-full h-2 mt-4 mx-auto">
-                          <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '80%' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Empty State */}
-                  {generationState.step === 'input' && !generationState.isGeneratingStructure && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-24 h-24 bg-secondary/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-                          <Sparkles className="w-12 h-12 text-secondary" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-text mb-2">
-                          Your mind map will appear here
-                        </h3>
-                        <p className="text-text-muted max-w-md">
-                          Enter content and click "Generate Mind Map Structure" to start creating beautiful comic-style mind maps
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Structure Generated - Waiting for Image */}
-                  {generationState.hasStructure && !generationState.hasImage && !generationState.isGeneratingImage && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-24 h-24 bg-accent/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-                          <Check className="w-12 h-12 text-accent" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-text mb-2">
-                          Structure generation complete!
-                        </h3>
-                        <p className="text-text-muted max-w-md">
-                          Mind map structure has been generated. Please confirm the content on the left and click "Generate Mind Map Image" button
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Final Generated Image */}
-                  {generationState.hasImage && generatedImageUrl && (
-                    <div className="absolute inset-0">
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <div className="absolute inset-0 p-4">
-                          <img 
-                            src={generatedImageUrl} 
-                            alt="Generated Mind Map" 
-                            className="max-w-full max-h-full object-contain mx-auto my-auto rounded-xl"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Fallback if image generation completed but no URL */}
-                  {generationState.hasImage && !generatedImageUrl && !generationState.isGeneratingImage && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-24 h-24 bg-red-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                          <X className="w-12 h-12 text-red-500" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-text mb-2">
-                          Image generation failed
-                        </h3>
-                        <p className="text-text-muted max-w-md">
-                          There was a problem during image generation, please try regenerating
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="text-sm text-text-muted">
-                Preview will display your generated mind map in {selectedAspectRatio?.ratio} format
-              </div>
             </div>
           </div>
         </div>
-
-        {/* Mobile Generate Button */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-neutral-card border-t border-border">
-          {generationState.step === 'input' && (
-            <button
-              onClick={handleGenerateStructure}
-              disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
-              className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {generationState.isGeneratingStructure ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating Structure...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  <span>Generate Mind Map Structure</span>
-                </>
-              )}
-            </button>
-          )}
-          
-          {generationState.hasStructure && !generationState.hasImage && (
-            <button
-              onClick={handleGenerateImage}
-              disabled={generationState.isGeneratingImage || !hasQuota}
-              className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {generationState.isGeneratingImage ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating Image...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  <span>Generate Mind Map Image</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Structure Review Modal */}
-        {showStructureModal && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-primary to-accent p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">Mind Map Structure Generated!</h2>
-                    <p className="text-white/90">Please review and edit the structure below, then click "Generate Image" to create your mind map.</p>
-                  </div>
-                  <button
-                    onClick={handleCloseModal}
-                    className="text-white/80 hover:text-white transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Modal Content */}
-              <div className="p-6 max-h-[50vh] overflow-y-auto">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Mind Map Structure</h3>
-                  <textarea
-                    value={editableStructure}
-                    onChange={(e) => setEditableStructure(e.target.value)}
-                    className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors font-mono text-sm bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="bg-gray-50 p-6">
-                <div className="flex justify-end space-x-4">
-                  <button
-                    onClick={handleCloseModal}
-                    className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={handleConfirmStructure}
-                    className="px-6 py-3 bg-accent text-white rounded-xl font-semibold hover:bg-accent/90 transition-colors"
-                  >
-                    Generate Image
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
