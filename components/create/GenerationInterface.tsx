@@ -64,6 +64,20 @@ export function GenerationInterface() {
     checkUserQuota();
   }, [user]);
 
+  // 重新检查配额的函数
+  const recheckQuota = async () => {
+    try {
+      // 模拟获取客户端IP（实际应用中需要从服务端获取）
+      const mockIP = '127.0.0.1';
+      const quota = await checkDailyLimit(user?.id, mockIP);
+      setHasQuota(quota);
+    } catch (error) {
+      console.error('重新检查配额失败:', error);
+      // 检查失败时默认有配额，避免影响用户体验
+      setHasQuota(true);
+    }
+  };
+
   const aspectRatioOptions = [
     { 
       value: '1:1', 
@@ -180,7 +194,7 @@ export function GenerationInterface() {
       toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
       
       // 生成成功后重新检查限制状态
-      setHasQuota(false); // 假设结构生成消耗了一次机会
+      await recheckQuota();
     } catch (error) {
       console.error('Structure generation error:', error);
       setGenerationState({

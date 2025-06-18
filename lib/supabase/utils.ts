@@ -110,7 +110,11 @@ export async function checkDailyLimit(userId?: string, ipAddress?: string) {
     user_ip: ipAddress || null
   })
   
-  if (error) throw error
+  if (error) {
+    console.error('检查每日限制时发生错误:', error);
+    // 如果检查失败，默认允许使用
+    return true;
+  }
   return data as boolean
 }
 
@@ -121,7 +125,10 @@ export async function recordUsage(userId?: string, ipAddress?: string) {
     user_ip: ipAddress || null
   })
   
-  if (error) throw error
+  if (error) {
+    console.error('记录使用量时发生错误:', error);
+    throw error;
+  }
 }
 
 // 获取用户订阅信息
