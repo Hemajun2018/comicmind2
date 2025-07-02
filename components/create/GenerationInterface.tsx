@@ -5,7 +5,6 @@ import { Loader2, Sparkles, Download, RefreshCw, Edit, Check, X, Crown, AlertCir
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { checkDailyLimit } from '@/lib/supabase/utils';
 
 interface GenerationState {
   step: 'input' | 'structure' | 'image';
@@ -43,11 +42,6 @@ export function GenerationInterface() {
   const [style, setStyle] = useState('kawaii');
   const [aspectRatio, setAspectRatio] = useState('4:3');
   
-  // 限制状态管理
-  const [hasQuota, setHasQuota] = useState(true);
-  const [quotaLoading, setQuotaLoading] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-
   const [generationState, setGenerationState] = useState<GenerationState>({
     step: 'input',
     isGeneratingStructure: false,
@@ -227,41 +221,6 @@ export function GenerationInterface() {
     return `${secs}秒`;
   };
 
-  // 检查用户限制
-  useEffect(() => {
-    const checkUserQuota = async () => {
-      setQuotaLoading(true);
-      try {
-        // 模拟获取客户端IP（实际应用中需要从服务端获取）
-        const mockIP = '127.0.0.1';
-        const quota = await checkDailyLimit(user?.id, mockIP);
-        setHasQuota(quota);
-      } catch (error) {
-        console.error('检查限制失败:', error);
-        // 如果检查失败，默认允许使用
-        setHasQuota(true);
-      } finally {
-        setQuotaLoading(false);
-      }
-    };
-
-    checkUserQuota();
-  }, [user]);
-
-  // 重新检查配额的函数
-  const recheckQuota = async () => {
-    try {
-      // 模拟获取客户端IP（实际应用中需要从服务端获取）
-      const mockIP = '127.0.0.1';
-      const quota = await checkDailyLimit(user?.id, mockIP);
-      setHasQuota(quota);
-    } catch (error) {
-      console.error('重新检查配额失败:', error);
-      // 检查失败时默认有配额，避免影响用户体验
-      setHasQuota(true);
-    }
-  };
-
   const aspectRatioOptions = [
     { 
       value: '1:1', 
@@ -316,10 +275,7 @@ export function GenerationInterface() {
 
   // 第一阶段：生成思维导图结构
   const handleGenerateStructure = async () => {
-    if (!input.trim()) {
-      toast.error('Please enter content to generate mind map');
-      return;
-    }
+    if (generationState.isGeneratingStructure || generationState.isGeneratingImage || !input) return;
 
     setGenerationState({
       step: 'structure',
@@ -348,21 +304,6 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        // 检查是否是限制达到的错误
-        if (data.code === 'DAILY_LIMIT_REACHED') {
-          setHasQuota(false);
-          setShowUpgradePrompt(true);
-          toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
-          setGenerationState({
-            step: 'input',
-            isGeneratingStructure: false,
-            isGeneratingImage: false,
-            hasStructure: false,
-            hasImage: false,
-            error: null,
-          });
-          return;
-        }
         throw new Error(data.error || 'Structure generation failed');
       }
 
@@ -379,9 +320,6 @@ export function GenerationInterface() {
 
       setShowStructureModal(true);
       toast.success('Mind map structure generated successfully! Please confirm content and click generate image');
-      
-      // 生成成功后重新检查限制状态
-      await recheckQuota();
     } catch (error) {
       console.error('Structure generation error:', error);
       setGenerationState({
@@ -398,11 +336,8 @@ export function GenerationInterface() {
   };
 
   // 第二阶段：生成思维导图图片
-  const handleGenerateImage = async () => {
-    if (!editableStructure.trim()) {
-      toast.error('Please generate or edit mind map structure first');
-      return;
-    }
+  const handleGenerateImage = async (structureToUse: string) => {
+    if (generationState.isGeneratingStructure || generationState.isGeneratingImage) return;
 
     setGenerationState({
       step: 'image',
@@ -423,7 +358,7 @@ export function GenerationInterface() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          structure: editableStructure,
+          structure: structureToUse,
           style: style,
           ratio: aspectRatio,
           language: language,
@@ -433,21 +368,6 @@ export function GenerationInterface() {
       const data = await response.json();
 
       if (!response.ok) {
-        // 检查是否是限制达到的错误
-        if (data.code === 'DAILY_LIMIT_REACHED') {
-          setHasQuota(false);
-          setShowUpgradePrompt(true);
-          toast.error('每日使用次数已用完，升级到Pro版本享受无限制使用！');
-          setGenerationState({
-            step: 'structure',
-            isGeneratingStructure: false,
-            isGeneratingImage: false,
-            hasStructure: true,
-            hasImage: false,
-            error: null,
-          });
-          return;
-        }
         throw new Error(data.error || 'Image generation failed');
       }
 
@@ -490,12 +410,12 @@ export function GenerationInterface() {
   const handleConfirmStructure = () => {
     setShowStructureModal(false);
     // 结构确认后，直接开始生成图片
-    handleGenerateImage();
+    handleGenerateImage(editableStructure);
   };
 
   const handleRegenerate = () => {
     if (generationState.hasStructure && !generationState.hasImage) {
-      handleGenerateImage();
+      handleGenerateImage(editableStructure);
     } else {
       handleGenerateStructure();
     }
@@ -637,67 +557,21 @@ export function GenerationInterface() {
                 </select>
               </div>
 
-              {/* 限制提示 */}
-              {!hasQuota && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
-                  <div className="flex items-center space-x-3">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-yellow-800 mb-1">每日限制已达上限</h4>
-                      <p className="text-sm text-yellow-700">免费用户每日可创建3个思维导图。升级到Pro版本享受无限制使用！</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => window.open('/settings', '_blank')}
-                    className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Crown className="w-4 h-4" />
-                    <span>立即升级到Pro</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Step 1: Generate Structure Button */}
-              {generationState.step === 'input' && (
+              {/* 生成按钮 */}
+              <div className="flex flex-col items-center space-y-4">
                 <button
                   onClick={handleGenerateStructure}
-                  disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
-                  className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  disabled={generationState.isGeneratingStructure || generationState.isGeneratingImage || !input}
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:scale-100"
                 >
-                  {generationState.isGeneratingStructure ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Generating Structure...</span>
-                    </>
+                  {(generationState.isGeneratingStructure || generationState.isGeneratingImage) ? (
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                   ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate</span>
-                    </>
+                    <Sparkles className="mr-2 h-6 w-6" />
                   )}
+                  {generationState.isGeneratingStructure || generationState.isGeneratingImage ? '正在生成中...' : '开始生成'}
                 </button>
-              )}
-
-              {/* Step 2: Generate Image Button */}
-              {generationState.hasStructure && !generationState.hasImage && (
-                <button
-                  onClick={handleGenerateImage}
-                  disabled={generationState.isGeneratingImage || !hasQuota}
-                  className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  {generationState.isGeneratingImage ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Generating Image...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate Mind Map Image</span>
-                    </>
-                  )}
-                </button>
-              )}
+              </div>
 
               {/* Action Buttons (when image generated) */}
               {generationState.hasImage && (
@@ -1012,7 +886,7 @@ export function GenerationInterface() {
           {generationState.step === 'input' && (
             <button
               onClick={handleGenerateStructure}
-              disabled={generationState.isGeneratingStructure || !input.trim() || !hasQuota || quotaLoading}
+              disabled={generationState.isGeneratingStructure || !input.trim()}
               className="w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {generationState.isGeneratingStructure ? (
@@ -1031,8 +905,8 @@ export function GenerationInterface() {
           
           {generationState.hasStructure && !generationState.hasImage && (
             <button
-              onClick={handleGenerateImage}
-              disabled={generationState.isGeneratingImage || !hasQuota}
+              onClick={() => handleGenerateImage(editableStructure)}
+              disabled={generationState.isGeneratingImage}
               className="w-full bg-accent text-white px-6 py-4 rounded-xl font-semibold text-lg hover-darken active-darken transition-colors-smooth shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {generationState.isGeneratingImage ? (

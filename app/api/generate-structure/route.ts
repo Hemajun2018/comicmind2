@@ -17,7 +17,8 @@ export async function POST(request: Request) {
                      request.headers.get('x-real-ip') || 
                      '127.0.0.1';
 
-    // 检查用户每日限制
+    // 检查用户每日限制 (临时禁用)
+    /*
     try {
       const hasQuota = await checkDailyLimit(user?.id, clientIP);
       if (!hasQuota) {
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
       console.error('Error checking daily limit:', limitError);
       // 如果限制检查失败，为了用户体验继续处理但记录错误
     }
+    */
 
     // Create a specialized prompt for mind map structure generation
     const prompt = `Based on the following text, create a structured mind map outline in Markdown format. The mind map should be hierarchical, well-organized, and capture the key concepts and relationships.
@@ -101,13 +103,15 @@ Please generate the mind map structure:`;
     // Extract the generated structure from the response
     const structure = data.choices?.[0]?.message?.content || '';
     
-    // 记录使用量（只有在成功生成后才记录）
+    // 记录使用量（只有在成功生成后才记录）(临时禁用)
+    /*
     try {
       await recordUsage(user?.id, clientIP);
     } catch (usageError) {
       console.error('Error recording usage:', usageError);
       // 记录使用量失败不影响主要功能
     }
+    */
     
     return NextResponse.json({ 
       success: true,
